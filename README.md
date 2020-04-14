@@ -15,7 +15,9 @@ Backend:
 
 ## Installing:
 
-TODO
+```sh
+$ pip install dead-simple-framework
+```
 
 
 ## Configuration:
@@ -23,11 +25,10 @@ TODO
 TODO
 
 ## Example Application:
-\* MongoDB must be running * [`mongod`] 
-
-Starts a local server at http://0.0.0.0:5000/
-
-Serves CRUD operations for MongoDB collection `demo` at endpoint `/demo`.
+\* MongoDB must be running *
+```sh
+$ mongod
+```
 
 ```python
 from dead_simple_framework import Application
@@ -45,3 +46,7 @@ sample_config = {
 
 Application(sample_config).run()
 ```
+
+Starts a local server at http://0.0.0.0:5000/
+
+Serves CRUD operations for MongoDB collection `demo` at endpoint `/demo`.
