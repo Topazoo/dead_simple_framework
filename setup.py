@@ -16,7 +16,7 @@ setuptools.setup(
     version='v0.0.1',
     long_description=README,
     url='https://github.com/Topazoo/dead_simple_framework',
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(where='framework/'),
     python_requires=">=3.5",
     install_requires=['flask', 'pymongo', 'celery'],
     classifiers=[],

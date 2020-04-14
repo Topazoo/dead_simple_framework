@@ -3,4 +3,5 @@
     Author: Peter Swanson
 '''
 
-from .main import (Application)
+from .main import Application
+from .sample import sample_config
