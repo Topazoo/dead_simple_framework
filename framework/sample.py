@@ -1,8 +1,4 @@
-#!/usr/bin/env python3.7
-
-from main import Application
-
-ROUTES = {
+sample_config = {
     '/demo': {
         'name': 'demo',
         'methods': ['GET', 'POST', 'DELETE', 'PUT'],
@@ -12,7 +8,3 @@ ROUTES = {
         'collection': 'demo'
     }
 }
-
-if __name__ == '__main__': 
-    application = Application(ROUTES)
-    application.run()
