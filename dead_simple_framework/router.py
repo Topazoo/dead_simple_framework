@@ -1,4 +1,4 @@
-from .api.main import API
+from .api import API
 
 from flask import Blueprint, render_template
 import json
