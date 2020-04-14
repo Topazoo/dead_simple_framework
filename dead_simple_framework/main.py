@@ -1,7 +1,7 @@
 
 from flask import Flask 
-from router import Router
-from encoder import JSON_Encoder
+from .router import Router
+from .encoder import JSON_Encoder
 import os
   
 class Application:

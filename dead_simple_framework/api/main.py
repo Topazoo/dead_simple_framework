@@ -1,8 +1,10 @@
-from database.main import Database
-from api.errors import API_Error
+from ..database.main import Database
+from .errors import API_Error
+from .utils import *
+
 from flask import jsonify, request, Request, Response
-from api.utils import *
 import json, os
+
 
 class API:
     ''' API interface '''

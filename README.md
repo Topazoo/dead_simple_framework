@@ -22,6 +22,24 @@ TODO
 
 TODO
 
-## Sample:
+## Example Application:
+Starts a local server at http://0.0.0.0:5000/
 
-TODO
+Serves CRUD operations for MongoDB collection `demo` at endpoint `/demo`.
+
+```python
+from dead_simple_framework import Application
+
+sample_config = {
+    '/demo': {
+        'name': 'demo',
+        'methods': ['GET', 'POST', 'DELETE', 'PUT'],
+        'template': None,
+        'defaults': None,
+        'logic': None,
+        'collection': 'demo'
+    }
+}
+
+Application(sample_config).run()
+```

@@ -1,12 +1,12 @@
 
-from database.main import Database
-from api.errors import API_Error
+from ..database.main import Database
+from .errors import API_Error
 
 from bson import ObjectId
 from pymongo.cursor import Cursor
-
 from flask import jsonify, Response
 import json, logging
+
 
 def JsonResponse(content: dict = {}, code: int = 200) -> Response:
     ''' Format an API JSON response.
