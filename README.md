@@ -1,4 +1,4 @@
-# :see_no_evil: Dead Simple Web Framework :hear_no_evil:
+# 🙈 Dead Simple Web Framework 🙉
 
 [![Python](https://img.shields.io/badge/Python-3.5.7+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-1.1.1-yellow.svg)](https://flask.palletsprojects.com/en/1.1.x/)
