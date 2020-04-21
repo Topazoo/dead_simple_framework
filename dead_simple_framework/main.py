@@ -2,9 +2,10 @@
 from flask import Flask 
 from .router import Router
 from .encoder import JSON_Encoder
+from .tasks import Celery
 import os
   
-class Application:
+class Application(Celery):
     ''' Main application driver '''
 
     def __init__(self, config:dict, debug=True):
@@ -14,9 +15,10 @@ class Application:
         self.app = Flask(__name__) 
         self.app.json_encoder = JSON_Encoder
 
-        # Register routes from config/routes.py
-        Router.register_routes(self.app, config) 
-
+        # Register routes passed in config
+        Router.register_routes(self.app, config['routes'])
+        
+        super().__init__(dynamic_tasks=config['tasks'])
 
     def run(self):
         ''' Run the server '''
