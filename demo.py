@@ -10,6 +10,13 @@ sample_config = {
             'defaults': None,
             'logic': None,
             'collection': 'demo'
+        },
+        '/': {
+            'name': 'index',
+            'methods': ['GET'],
+            'template': None,
+            'defaults': None,
+            'logic': lambda: str(Application.run_task('add', [5, 8], kwargs={}).get()),
         }
     },
     'tasks': {
@@ -17,12 +24,7 @@ sample_config = {
             'logic': lambda x,y: x + y,
             'schedule': None,
             'timeframe': None
-        }, 
-        'subtract': {
-            'logic': lambda x,y: x - y,
-            'schedule': None,
-            'timeframe': None
-        } 
+        }
     }
 }
 

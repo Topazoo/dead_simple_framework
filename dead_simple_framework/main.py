@@ -8,6 +8,8 @@ import os
 class Application(Celery):
     ''' Main application driver '''
 
+    _app = None
+
     def __init__(self, config:dict, debug=True):
         ''' Initialize the server '''
 
@@ -20,7 +22,17 @@ class Application(Celery):
         
         super().__init__(dynamic_tasks=config['tasks'])
 
+        Application._app = self
+
+
     def run(self):
         ''' Run the server '''
 
         self.app.run(host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'), debug=(os.environ.get('APP_DEBUG') == 'True'))
+
+
+    @classmethod
+    def run_task(cls, task_name:str, *args, **kwargs):
+        ''' Wrapper to simplify firing tasks from route logic '''
+
+        return cls._app.send_task('add', *args, **kwargs)
