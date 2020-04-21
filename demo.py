@@ -1,6 +1,5 @@
 from dead_simple_framework import Application
 
-
 sample_config = {
     'routes': {
         '/demo': {
