@@ -7,12 +7,12 @@ class Celery(_Celery):
     def _get_host(self):
         ''' Hook in RabbitMQ '''
 
-        host = 'amqp://'
-        if os.environ.get('RABBITMQ_HOSTNAME'):
-            host += f"{os.environ.get('RABBITMQ_USERNAME')}@"
-        host += f"{os.environ.get('RABBITMQ_HOST', 'localhost')}"
+        host = os.environ.get('RABBITMQ_HOST', 'localhost')
+        port = os.environ.get('RABBITMQ_PORT', '5672')
+        username = os.environ.get('RABBITMQ_USERNAME', 'guest')
+        password = os.environ.get('RABBITMQ_PASSWORD', 'guest')
 
-        return host
+        return f"amqp://{username}:{password}@{host}:{port}/"
 
 
     def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend='rpc://', amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = True, ignore_result=False, **kwargs):

@@ -14,10 +14,9 @@ Backend:
 
 - Python 3.7 [Flask]
 - MongoDB
-- Celery
+- Celery + RabbitMQ
 - TODO: Kafka Hooks
 - TODO: Redis Hooks
-- TODO: RabbitMQ Hooks
 
 ## Installing:
 
