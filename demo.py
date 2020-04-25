@@ -1,4 +1,4 @@
-from dead_simple_framework import Application
+from dead_simple_framework import Application, Task_Manager, Database
 
 sample_config = {
     'routes': {
@@ -15,7 +15,7 @@ sample_config = {
             'methods': ['GET'],
             'template': None,
             'defaults': None,
-            'logic': lambda: str(Application.run_task('add', [5, 8], kwargs={}).get()),
+            'logic': lambda: str(Task_Manager.run_task('add', [5, 8], kwargs={}).get()),
         }
     },
     'tasks': {

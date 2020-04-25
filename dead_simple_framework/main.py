@@ -2,10 +2,10 @@
 from flask import Flask 
 from .router import Router
 from .encoder import JSON_Encoder
-from .tasks import Celery
+from .tasks import Task_Manager
 import os
   
-class Application(Celery):
+class Application(Task_Manager):
     ''' Main application driver '''
 
     _app = None
@@ -22,7 +22,7 @@ class Application(Celery):
         
         super().__init__(dynamic_tasks=config['tasks'])
 
-        Application._app = self
+        Application._app = Task_Manager._app = self
 
 
     def run(self):

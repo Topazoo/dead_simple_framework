@@ -1,1 +1,1 @@
-from .main import Celery
+from .main import Task_Manager

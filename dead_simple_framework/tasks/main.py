@@ -1,8 +1,10 @@
-from celery import Celery as _Celery
+from celery import Celery
 import os, logging
 
-class Celery(_Celery):
+class Task_Manager(Celery):
     ''' Wrapper for celery base class to allow dynamic task registration '''
+
+    _app = None # Internal self-reference
 
     def _get_host(self):
         ''' Hook in RabbitMQ '''
@@ -32,3 +34,10 @@ class Celery(_Celery):
                 task_params['logic'].__name__ = task_name
 
             self.task(task_params['logic'], name=task_name)
+
+
+    @classmethod
+    def run_task(cls, task_name:str, *args, **kwargs):
+        ''' Wrapper to simplify firing tasks from route logic '''
+
+        return cls._app.send_task('add', *args, **kwargs)
