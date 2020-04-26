@@ -1,5 +1,6 @@
 from bson import ObjectId
 from flask.json import JSONEncoder
+import json
 
 class JSON_Encoder(JSONEncoder):
     ''' Custom encoder for jsonify() '''
@@ -10,4 +11,4 @@ class JSON_Encoder(JSONEncoder):
         except TypeError:
             obj = str(obj)
             
-            return  obj
+            return obj

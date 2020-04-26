@@ -16,12 +16,25 @@ sample_config = {
             'template': None,
             'defaults': None,
             'logic': lambda: str(Task_Manager.run_task('add', [5, 8], kwargs={}).get()),
+        },
+        '/insert': {
+            'name': 'insert',
+            'methods': ['GET', 'POST', 'DELETE', 'PUT'],
+            'template': None,
+            'defaults': None,
+            'logic': None,
+            'collection': 'insert'
         }
     },
     'tasks': {
         'add': {
             'logic': lambda x,y: x + y,
             'schedule': None,
+            'timeframe': None
+        },
+        'insert': {
+            'logic': lambda: Database(collection='insert').connect().insert_one({'test': 'doc'}),
+            'schedule': {}, # Default - every minute
             'timeframe': None
         }
     }

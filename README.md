@@ -42,7 +42,7 @@ $ celery -A demo worker -l info
 ```
 
 ```python
-from dead_simple_framework import Application
+from dead_simple_framework import Application, Task_Manager, Database
 
 sample_config = {
     'routes': {
@@ -59,13 +59,26 @@ sample_config = {
             'methods': ['GET'],
             'template': None,
             'defaults': None,
-            'logic': lambda: str(Application.run_task('add', [5, 8], kwargs={}).get()),
+            'logic': lambda: str(Task_Manager.run_task('add', [5, 8], kwargs={}).get()),
+        },
+        '/insert': {
+            'name': 'insert',
+            'methods': ['GET', 'POST', 'DELETE', 'PUT'],
+            'template': None,
+            'defaults': None,
+            'logic': None,
+            'collection': 'insert'
         }
     },
     'tasks': {
         'add': {
             'logic': lambda x,y: x + y,
             'schedule': None,
+            'timeframe': None
+        },
+        'insert': {
+            'logic': lambda: Database(collection='insert').connect().insert_one({'test': 'doc'}),
+            'schedule': {}, # Default - every minute
             'timeframe': None
         }
     }
@@ -81,3 +94,5 @@ if __name__ == '__main__':
 - Serves CRUD operations for MongoDB collection `demo` at endpoint `/demo`.
 
 - Runs and returns the result of an asynchronous Celery task at endpoint `/`
+
+- Runs an asynchronous insert into the `insert` collection (viewable at `/insert`)
