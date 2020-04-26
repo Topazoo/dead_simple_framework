@@ -85,14 +85,21 @@ class Task_Manager(Celery):
 
 
     @classmethod
-    def run_task(cls, task_name:str, *args, **kwargs):
-        ''' Wrapper to simplify firing tasks from route logic '''
+    def schedule_task(cls, task_name:str, *args, **kwargs):
+        ''' Schedule a task to be retreived later with `.get()` '''
         
         if not cls._inernal_tasks[task_name]['params'].get('depends_on'):
             return cls._app.send_task(task_name, *args, **kwargs)
 
         else:
             return cls._app.create_chain(task_name, args, kwargs)
+
+
+    @classmethod
+    def run_task(cls, task_name:str, *args, **kwargs):
+        ''' Schedule a task and fetch the result immediately '''
+        
+        return cls.schedule_task(task_name, args, kwargs).get()
 
 
     @classmethod

@@ -15,7 +15,7 @@ sample_config = {
             'methods': ['GET'],
             'template': None,
             'defaults': None,
-            'logic': lambda: str(Task_Manager.run_task('add', [5, 8], kwargs={}).get()),
+            'logic': lambda: str(Task_Manager.run_task('add', [5, 8], kwargs={})),
         },
         '/insert': {
             'name': 'insert',
