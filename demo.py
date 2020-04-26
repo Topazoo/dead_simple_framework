@@ -30,12 +30,14 @@ sample_config = {
         'add': {
             'logic': lambda x,y: x + y,
             'schedule': None,
-            'timeframe': None
+            'timeframe': None,
+            'args': (2,2)
         },
         'insert': {
-            'logic': lambda: Database(collection='insert').connect().insert_one({'test': 'doc'}),
+            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
             'schedule': {}, # Default - every minute
-            'timeframe': None
+            'timeframe': None,
+            'depends_on': 'add' # Return value substituted for `res`
         }
     }
 }

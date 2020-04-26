@@ -74,12 +74,14 @@ sample_config = {
         'add': {
             'logic': lambda x,y: x + y,
             'schedule': None,
-            'timeframe': None
+            'timeframe': None,
+            'args': (2,2)
         },
         'insert': {
-            'logic': lambda: Database(collection='insert').connect().insert_one({'test': 'doc'}),
+            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
             'schedule': {}, # Default - every minute
-            'timeframe': None
+            'timeframe': None,
+            'depends_on': 'add' # Return value substituted for `res`
         }
     }
 }
@@ -95,4 +97,4 @@ if __name__ == '__main__':
 
 - Runs and returns the result of an asynchronous Celery task at endpoint `/`
 
-- Runs an asynchronous insert into the `insert` collection (viewable at `/insert`)
+- Runs an asynchronous chained value calculation and insert into the `insert` collection (viewable at `/insert`)
