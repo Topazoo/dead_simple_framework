@@ -3,6 +3,8 @@ from flask import Flask
 from .router import Router
 from .encoder import JSON_Encoder
 from .tasks import Task_Manager
+
+from flask_cors import CORS
 import os
   
 class Application(Task_Manager):
@@ -23,6 +25,8 @@ class Application(Task_Manager):
         super().__init__(dynamic_tasks=config['tasks'])
 
         Application._app = Task_Manager._app = self
+
+        CORS(app) # TODO - Don't do this, set allow in config later
 
 
     def run(self):
