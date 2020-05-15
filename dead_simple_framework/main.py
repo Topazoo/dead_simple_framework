@@ -26,7 +26,7 @@ class Application(Task_Manager):
 
         Application._app = Task_Manager._app = self
 
-        CORS(app) # TODO - Don't do this, set allow in config later
+        CORS(self.app) # TODO - Don't do this, set allow in config later
 
 
     def run(self):
