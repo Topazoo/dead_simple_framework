@@ -22,3 +22,12 @@ class API_Client_Error(Exception):
         super(Exception, self).__init__(f"{method} Request Error [{code}] | {self.CODES[code]} | {url}")
         self.code = code
         self.method = method
+
+    def __getstate__(self):
+        return (self.url, self.method, self.message)
+
+    def __setstate__(self, state):
+        API_Client_Error.__init__(self)
+        self.url = state[0]
+        self.method = state[1]
+        self.message = state[2]
