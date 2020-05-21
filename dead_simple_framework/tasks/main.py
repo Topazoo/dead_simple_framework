@@ -99,7 +99,7 @@ class Task_Manager(Celery):
     def run_task(cls, task_name:str, *args, **kwargs):
         ''' Schedule a task and fetch the result immediately '''
         
-        return cls.schedule_task(task_name, args, kwargs).get()
+        return cls.schedule_task(task_name, *args, **kwargs).get()
 
 
     @classmethod
