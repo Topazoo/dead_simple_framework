@@ -140,3 +140,5 @@ cython_debug/
 # Debug
 test.py
 .DS_Store
+celerybeat-schedule
+.vscode

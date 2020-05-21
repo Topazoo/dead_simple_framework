@@ -7,7 +7,7 @@ import json, os
 
 
 class API:
-    ''' API interface '''
+    ''' Internal API interface '''
 
     ROUTES = {}
     

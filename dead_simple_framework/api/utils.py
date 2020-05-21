@@ -1,6 +1,9 @@
-
-from ..database.main import Database
-from .errors import API_Error
+if __package__ is None or __package__ == '':
+    from dead_simple_framework.database.main import Database
+    from errors import API_Error
+else:
+    from ..database.main import Database
+    from .errors import API_Error
 
 from bson import ObjectId
 from pymongo.cursor import Cursor
@@ -82,6 +85,15 @@ def parse_query_string(payload: str) -> dict:
             dict_payload[args[0]] = parse_query_params(args[1])
 
     return dict_payload
+
+
+def create_query_string(query_params:dict) -> str:
+    ''' Generate a query string from a dictionary of parameters 
+
+        e.g. {'item': '56', 'type': '21' }  -> "?item=56&type=21"
+    '''
+
+    return '?' + '&'.join([f"{k}={v}" for k,v in query_params.items()]) if query_params else ''
 
 
 def fetch_and_filter_data(request_params: dict, database:str=None, collection:str=None) -> list:
