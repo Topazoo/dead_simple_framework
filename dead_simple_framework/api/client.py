@@ -22,6 +22,7 @@ class API:
 
         return result
 
+
     @staticmethod
     def get_json(url:str, query_params:dict=None):
         ''' [HTTP GET] Fetch a JSON from an API '''
