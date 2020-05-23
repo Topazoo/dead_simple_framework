@@ -1,13 +1,15 @@
 from celery import Celery, chain
 from celery.schedules import crontab
 from kombu.serialization import register
+from ..cache.main import Cache
 import os, json, logging
 
 class Task_Manager(Celery):
-    ''' Wrapper for celery base class to allow dynamic task registration '''
+    ''' Client for managing asynchronous tasks '''
 
-    _app = None # Internal self-reference
-    _inernal_tasks = {}
+    _app = None             # Internal self-reference
+    _inernal_tasks = {}     # Internal reference to all dynamically registered tasks
+    _cache = Cache()        # Cache for task results
 
     def _get_host(self):
         ''' Hook in RabbitMQ '''
