@@ -9,7 +9,9 @@ class Task_Manager(Celery):
 
     _app = None             # Internal self-reference
     _inernal_tasks = {}     # Internal reference to all dynamically registered tasks
-    _cache = Cache()        # Cache for task results
+    
+    _cache = Cache()                # Cache for task result IDs
+    _cache_path = '_task_results_'  # Key to store them at in the cache
 
     def _get_host(self):
         ''' Hook in RabbitMQ '''
@@ -120,3 +122,20 @@ class Task_Manager(Celery):
             dependants.insert(0, task.s(*task_params.get('args', []), **task_params.get('kwargs', {}))) 
 
         return chain(*dependants)()
+
+    
+    @classmethod
+    def cache_task_result(cls, task_name, result):
+        ''' Store the ID of a task result in the cache '''
+
+        cls._cache.cache_dynamic_dict(cls._cache_path, {task_name: result})
+
+
+    @classmethod 
+    def get_task_result(cls, task_name):
+        ''' Get the result of a cached task if it exists '''
+
+        task_id = cls._cache.get_dynamic_dict_value(cls._cache_path, task_name)
+        if task_id:
+            pass
+            # TODO - Pull celery result using the task_id

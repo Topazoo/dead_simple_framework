@@ -4,6 +4,8 @@ import redis, os, json
 class Cache:
     ''' Client for caching task results or database queries '''
 
+    # TODO - Dynamic list support
+
     def __init__(self):
         self._redis = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=os.environ.get('REDIS_PORT', 6379), db=0)
 
@@ -35,8 +37,6 @@ class Cache:
             value = {x: json.dumps(y) for x,y in value.items()}
             self._redis.hset(key, mapping=value)
 
-
-    # TODO - Dynamic list support
 
     def get_dynamic_dict_value(self, dict_key, key):
         ''' Get a value from a cached dictionary stored with cache_dynamic_dict() '''
