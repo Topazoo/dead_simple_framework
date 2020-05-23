@@ -12,11 +12,10 @@ A dead simple framework for web applications:
 
 Backend:
 
-- Python 3.7 [Flask]
-- MongoDB
-- Celery + RabbitMQ
-- TODO: Kafka Hooks
-- TODO: Redis Hooks
+- Flask [Framework]
+- MongoDB [Database]
+- Redis [Cache]
+- Celery + RabbitMQ [Async Tasks]
 
 ## Installing:
 
