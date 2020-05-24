@@ -70,8 +70,7 @@ sample_config = {
 
         'rand_add': {   # Simple Addition Task (with random arguments) 
             'logic': lambda: randint(0, 1000) + randint(1, 10000),
-            'schedule': {},  # Default - every minute,
-            'cache': False
+            'schedule': {},  # Default - every minute
         },
     }
 }
