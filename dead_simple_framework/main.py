@@ -24,9 +24,10 @@ class Application(Task_Manager):
         
         super().__init__(dynamic_tasks=config['tasks'])
 
-        Application._app = Task_Manager._app = self
+        Application._app = self
 
-        CORS(self.app) # TODO - Don't do this, set allow in config later
+        if debug:
+            CORS(self.app) # TODO - Don't do this, set allow in config later
 
 
     def run(self):
@@ -39,4 +40,6 @@ class Application(Task_Manager):
     def run_task(cls, task_name:str, *args, **kwargs):
         ''' Wrapper to simplify firing tasks from route logic '''
 
-        return cls._app.send_task('add', *args, **kwargs)
+        print(f'{task_name}')
+
+        return cls._app.send_task(task_name, *args, **kwargs)
