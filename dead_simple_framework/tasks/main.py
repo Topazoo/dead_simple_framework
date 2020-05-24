@@ -7,7 +7,7 @@ from celery.schedules import crontab
 from kombu.serialization import register
 
 # Cache
-from ..cache.main import Cache
+from ..cache import Cache
 from .cached_task import Cached_Task
 
 # Utilities

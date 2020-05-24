@@ -1,10 +1,15 @@
+# Flask
+from flask import Blueprint, render_template
+
+# Internal API 
 from .api import API
 
-from flask import Blueprint, render_template
+# Encoding
 import json
 
-# debug
+# Debug
 from pprint import pprint
+
 
 class Router:
     ''' Module allowing route specification as a list of dictionaries in config/routes.py'''

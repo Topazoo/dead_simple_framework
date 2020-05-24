@@ -1,5 +1,5 @@
 # Cache
-from ..cache.main import Cache
+from ..cache import Cache
 
 # Celery
 from celery import Task

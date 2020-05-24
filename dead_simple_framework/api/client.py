@@ -1,15 +1,15 @@
-if __package__ is None or __package__ == '':
-    from utils import create_query_string
-    from errors import API_Client_Error
-else:
-    from .utils import create_query_string
-    from .errors import API_Client_Error
-
+# Requests
 import requests
+
+# API Utilities
+from .utils import create_query_string
+
+# API Errors
+from .errors import API_Client_Error
 
 
 class API:
-    ''' Internal API interface '''
+    ''' Client for making HTTP requests  '''
 
     @staticmethod
     def get(url:str, query_params:dict=None, ignore_errors=False):

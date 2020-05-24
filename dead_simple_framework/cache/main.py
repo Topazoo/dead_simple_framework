@@ -1,6 +1,16 @@
+# Redis
+import redis
+
+# Redis Errors
 from redis.exceptions import ResponseError, DataError
+
+# Encoding
 from ..encoder import JSON_Encoder
-import redis, os, json
+import json
+
+# Utilities
+import os
+
 
 class Cache:
     ''' Client for caching task results or database queries '''

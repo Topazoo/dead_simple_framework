@@ -1,14 +1,19 @@
-if __package__ is None or __package__ == '':
-    from dead_simple_framework.database.main import Database
-    from errors import API_Error
-else:
-    from ..database.main import Database
-    from .errors import API_Error
-
-from bson import ObjectId
-from pymongo.cursor import Cursor
+# Flask HTTP
 from flask import jsonify, Response
-import json, logging
+
+# API Errors
+from .errors import API_Error
+
+# Database
+from ..database import Database
+from pymongo.cursor import Cursor
+from bson import ObjectId
+
+# Encoding
+import json
+
+# Debug
+import logging
 
 
 def JsonResponse(content: dict = {}, code: int = 200) -> Response:

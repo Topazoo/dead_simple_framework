@@ -1,11 +1,22 @@
-
+# Flask
 from flask import Flask 
+from flask_cors import CORS
+
+# Routing
 from .router import Router
+
+#Encoding
 from .encoder import JSON_Encoder
+
+# Async Tasks
 from .tasks import Task_Manager
 
-from flask_cors import CORS
+# Utilities
 import os
+
+# Debug
+import logging
+  
   
 class Application(Task_Manager):
     ''' Main application driver '''

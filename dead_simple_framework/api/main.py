@@ -1,13 +1,24 @@
-from ..database.main import Database
+# Flask HTTP
+from flask import request, Request, Response, jsonify
+
+# API Errors
 from .errors import API_Error
+
+# API Utilities
 from .utils import *
 
-from flask import jsonify, request, Request, Response
-import json, os
+# Database
+from ..database import Database
+
+# Encoding
+import json
+
+# Utilities
+import os
 
 
 class API:
-    ''' Internal API interface '''
+    ''' Internal HTTP requests handler for Flask routes '''
 
     ROUTES = {}
     

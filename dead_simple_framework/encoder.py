@@ -1,5 +1,7 @@
-from bson import ObjectId
+# Base Encoder
 from flask.json import JSONEncoder
+
+# Utilities
 import json
 
 class JSON_Encoder(JSONEncoder):

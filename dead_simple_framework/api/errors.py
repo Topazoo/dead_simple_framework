@@ -1,4 +1,6 @@
+# Storage Utilities
 from collections import defaultdict
+
 
 class API_Error(Exception):
     ''' Error thrown internally by the server API when a bad request is received '''

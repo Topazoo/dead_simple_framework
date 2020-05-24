@@ -1,6 +1,10 @@
+# MongoDB
 from pymongo import MongoClient
 from pymongo.collection import Collection
+
+# Utilities
 import os
+
 
 class Database:
     ''' MongoDB interface '''
