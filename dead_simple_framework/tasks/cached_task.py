@@ -16,6 +16,7 @@ class Cached_Task(Task):
 
 
     def on_success(self, retval, task_id, args, kwargs):
-        ''' Cache task result if completed '''
+        ''' Catches the result of an asynchrounos task when it completes'''
 
+        # Add to a cached dictionary at the `_cache_path` without having to overwrite the entire dictionary
         self._cache.cache_dynamic_dict(self._cache_path, {self.name: retval})
