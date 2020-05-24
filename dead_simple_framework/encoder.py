@@ -5,12 +5,12 @@ from flask.json import JSONEncoder
 import json
 
 class JSON_Encoder(JSONEncoder):
-    ''' Custom encoder for jsonify() '''
+    ''' Custom JSON serializer '''
 
     def default(self, obj):
-        try:
+        try:                # Attempt regular serialization
             obj = JSONEncoder.default(self, obj)
-        except TypeError:
+        except TypeError:   # Write as string on failure
             obj = str(obj)
             
             return obj
