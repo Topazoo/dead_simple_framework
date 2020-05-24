@@ -40,6 +40,4 @@ class Application(Task_Manager):
     def run_task(cls, task_name:str, *args, **kwargs):
         ''' Wrapper to simplify firing tasks from route logic '''
 
-        print(f'{task_name}')
-
         return cls._app.send_task(task_name, *args, **kwargs)
