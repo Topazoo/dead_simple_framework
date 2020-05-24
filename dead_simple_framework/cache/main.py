@@ -1,8 +1,11 @@
 from redis.exceptions import ResponseError, DataError
+from ..encoder import JSON_Encoder
 import redis, os, json
 
 class Cache:
     ''' Client for caching task results or database queries '''
+
+    # TODO - Dynamic list support
 
     def __init__(self):
         self._redis = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=os.environ.get('REDIS_PORT', 6379), db=0)
@@ -17,7 +20,7 @@ class Cache:
     def cache_dict(self, key:str, value:dict):
         ''' Add or overwrite a dictionary in the cache '''
 
-        self.cache_string(key, json.dumps(value)) # Serialize dictionaries for storage
+        self.cache_string(key, json.dumps(value, cls=JSON_Encoder)) # Serialize dictionaries for storage
 
 
     def cache_list(self, key:str, value:list):
@@ -32,16 +35,16 @@ class Cache:
         try: # Attempt to insert
             self._redis.hset(key, mapping=value)
         except DataError: # Serialize value if necessary
-            value = {x: json.dumps(y) for x,y in value.items()}
+            value = {x: json.dumps(y, cls=JSON_Encoder) for x,y in value.items()}
             self._redis.hset(key, mapping=value)
 
-
-    # TODO - Dynamic list support
 
     def get_dynamic_dict_value(self, dict_key, key):
         ''' Get a value from a cached dictionary stored with cache_dynamic_dict() '''
 
-        return self._fix_type(self._redis.hget(dict_key, key).decode())
+        result = self._redis.hget(dict_key, key)
+        if result:
+            return self._fix_type(result).decode()
 
 
     def get(self, key):
