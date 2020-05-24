@@ -52,8 +52,11 @@ class API:
         '''
         
         try:
+            # Parse the query string into key/value pairs and store
             payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
+            # Use the query string to send a database query
             data_cursor = fetch_and_filter_data(payload, database, collection)
+            # Sort the data if one was specified in the query string
             sorted_data = list(sort_data(data_cursor, payload))
 
             return JsonResponse({'data': sorted_data}, 200 if len(sorted_data) > 0 else 404)
@@ -78,7 +81,9 @@ class API:
         '''
 
         try:
+            # Get request body parameters
             payload = request.get_json(force=True) if request.data else {}
+            # Remove any passed _id and insert in the database [TODO - allow? Maybe a config option?]
             if payload:
                 payload.pop('_id', None)
                 ins = insert_data(payload, database, collection)
@@ -113,7 +118,9 @@ class API:
         '''
 
         try:
+            # Get request body parameters
             payload = request.get_json(force=True) if request.data else {}
+            # Use the passed _id to update data in the database
             if payload:
                 _id = payload.get('_id')
                 if not getattr(update_data(payload, database, collection), 'modified_count', None): 
@@ -146,8 +153,10 @@ class API:
         '''
 
         try:
+            # Get request body parameters
             payload = request.get_json(force=True) if request.data else {}
             if payload:
+                # Use the passed _id to update data in the database
                 _id = payload.get('_id')
                 if not getattr(delete_data(payload, database, collection), 'deleted_count', None):
                     raise API_Error(f'ID [{_id}] not found', 404)
@@ -173,21 +182,26 @@ class API:
                 all other data returned from the server.
         '''
 
+        # Get the configuration for the route that was accessed
         route_config = cls.ROUTES[str(request.url_rule)]
+
+        # Get the database/collection
         database = route_config.get('database')
         collection = route_config.get('collection')
-        delegate = route_config.get('logic')
         
+        # TODO - Enable restrictions based on config!!
+        # Run CRUD handling
         if request.method == 'GET':
             data = API.GET(request, database, collection)
-
         if request.method == 'POST':
             data = API.POST(request, database, collection)
-
         if request.method == 'PUT':
             data = API.PUT(request, database, collection)
-
         if request.method == 'DELETE':
             data = API.DELETE(request, database, collection)
 
+        # Get the logic that should be run for this route (if any)
+        delegate = route_config.get('logic')
+
+        # Run it, or return the data for the CRUD operation run
         return data if not delegate else delegate(request, data)
