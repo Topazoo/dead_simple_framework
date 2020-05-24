@@ -62,6 +62,9 @@ class Cache:
         result = self._redis.hget(dict_key, key)
 
         # Correct the type using `json.loads()` if necessary
+
+        # TODO - Fix this, dictionary data is coming back in bad shape
+        
         if result:
             return self._fix_type(result).decode()
 

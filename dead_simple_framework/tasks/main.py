@@ -145,6 +145,9 @@ class Task_Manager(Celery):
             return cls._app.create_chain(task_name, args, kwargs)
 
         # Otherwise send it to the next available worker
+
+        # TODO - Introspect passed arguments or these? lambdas were acting up in call demo
+
         return cls._app.send_task(task_name, *args, **kwargs)
 
 
@@ -154,6 +157,8 @@ class Task_Manager(Celery):
         
         # Send the task to the next available worker
         cls.schedule_task(task_name, *args, **kwargs)
+
+        # TODO - Wait for task completion
 
         # Fetch the result from the cache and return
         return cls.get_result(task_name)
