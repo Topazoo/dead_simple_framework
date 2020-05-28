@@ -174,9 +174,9 @@ class Task_Manager(Celery):
         # Apply default arguments if none provided
         default_args = cls._internal_tasks[task_name]['params'].get('args')
         if not args and default_args:
-            args = default_args
+            args = (default_args,)
 
-        return cls._app.send_task(task_name, args, kwargs)
+        return cls._app.send_task(task_name, *args, **kwargs)
 
 
     @classmethod
