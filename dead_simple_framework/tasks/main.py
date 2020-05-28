@@ -84,13 +84,16 @@ class Task_Manager(Celery):
 
             The type is based on the `store_results` key, if it is present, possible values:
               - 'all'    | Store all results in the database
-              - 'latest' | Store the last result in the database
+              - 'latest' | Store the last result in the database [default]
         '''
 
         _type = task_params.get('store_results')
-        if _type == 'all': return Store_Task
-        if _type:          return Store_Latest_Task
-        return Task
+        if _type == 'all': 
+            return Store_Task
+        if _type == False:
+            return Task
+
+        return Store_Latest_Task
 
     def register_tasks(self, tasks:dict):
         ''' Dynamically register all tasks specified in the `tasks` section of the application config with Celery '''
@@ -167,31 +170,28 @@ class Task_Manager(Celery):
         # Check to see if the relies on sub-tasks and must be chained 
         if cls._internal_tasks[task_name]['params'].get('depends_on'):
             return cls._app.create_chain(task_name, args, kwargs)
+        
+        # Apply default arguments if none provided
+        default_args = cls._internal_tasks[task_name]['params'].get('args')
+        if not args and default_args:
+            args = default_args
 
-        # Otherwise send it to the next available worker
+        return cls._app.send_task(task_name, args, kwargs)
 
-        # TODO - Introspect passed arguments or these? lambdas were acting up in call demo
-
-        return cls._app.send_task(task_name, *args, **kwargs)
-
-
-    def detect_change(self, database=None, collection=None, operations=['insert', 'update']):
-        ''' Detect a change on a Mongo collection '''
-
-        pipeline = [{'$match': {'operationType': {'$in': operations}}}]
-        with self.connect(database, collection).watch(pipeline) as stream:
-            for insert_change in stream:
-                return True
 
     @classmethod
     def run_task(cls, task_name:str, *args, **kwargs):
+        # TODO - Timeouts
         ''' Run an asynchronous task and get the result immediately (force synchronous)'''
+
+        cache = Cache()
 
         is_started = False
         last_id = Cache().get_dynamic_dict_value(cls._results_cache_key, task_name)
-        while Cache().get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
+        # Wait for ID of cached result to update then return
+        while cache.get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
             if not is_started:
-                # Send the task to the next available worker
+                # Send the task to the next available worker once
                 cls.schedule_task(task_name, *args, **kwargs)
                 is_started = True
 
@@ -231,3 +231,11 @@ class Task_Manager(Celery):
             with Database(collection=cls._results_collection) as db:
                 res =  db.find_one({'_id': ObjectId(result_id)})
                 return res['task_result'] if res else res
+
+
+    @classmethod 
+    def get_results(cls, task_name):
+        ''' Get all stored results for a task '''
+
+        with Database(collection=cls._results_collection) as db:
+            return list(db.find({'task_name': task_name}))

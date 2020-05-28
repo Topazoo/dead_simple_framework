@@ -1,5 +1,6 @@
 # Database
 from ..database import Database
+from bson import ObjectId
 
 # Cache
 from ..cache import Cache
@@ -66,34 +67,31 @@ class Store_Task(Database_Task):
                     'task_result': str(retval)
                 })
 
-            Cache().cache_dynamic_dict(self._cache_key, {self.name: str(res.inserted_id)})
+        Cache().cache_dynamic_dict(self._cache_key, {self.name: str(res.inserted_id)})
 
 
 class Store_Latest_Task(Database_Task):
     ''' Celery task that persistently stores the latest result in the database '''
 
-    _collection  = '_task_results_'  # Collection to store results in
-
-    def on_success(self, retval, task_id, args, kwargs):
+    def success(self, retval, task_id, args, kwargs):
         ''' Stores the result of an asynchronous task in Mongo when it completes '''
+
+        _id = Cache().get_dynamic_dict_value(self._cache_key, self.name) or ObjectId()
 
         # Store the result in MongoDB for retrieval with `Task_Manager.get_result()`
         with Database(collection=self._collection) as db:
+            db.delete_one({'_id': ObjectId(_id)})
             try:
-                res = db.update_one(
-                {'task_name': self.name},
-                {'$set': {
+                res = db.insert_one({
                     'task_name': self.name,
                     'task_id': str(task_id),
                     'task_result': retval
-                }})
+                })
             except InvalidDocument as e:
-                res = db.update_one(
-                {'task_name': self.name},
-                {'$set': {
+                res = db.insert_one({
                     'task_name': self.name,
                     'task_id': str(task_id),
-                    'task_result':str(retval)
-                }})
-            
-            Cache().cache_dynamic_dict(self._cache_key, {self.name: str(res.upserted_id)})
+                    'task_result': str(retval)
+                })
+        
+        Cache().cache_dynamic_dict(self._cache_key, {self.name: str(res.inserted_id)})
