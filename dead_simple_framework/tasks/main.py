@@ -187,7 +187,7 @@ class Task_Manager(Celery):
         cache = Cache()
 
         is_started = False
-        last_id = Cache().get_dynamic_dict_value(cls._results_cache_key, task_name)
+        last_id = cache.get_dynamic_dict_value(cls._results_cache_key, task_name)
         # Wait for ID of cached result to update then return
         while cache.get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
             if not is_started:
