@@ -6,9 +6,15 @@ from celery.result import AsyncResult
 from celery.schedules import crontab
 from kombu.serialization import register
 
+# Custom Tasks
+from .task import Database_Task, Store_Task, Store_Latest_Task
+
+# Database
+from ..database import Database
+from bson import ObjectId
+
 # Cache
 from ..cache import Cache
-from .cached_task import Cached_Task
 
 # Utilities
 from celery import chain
@@ -28,9 +34,9 @@ class Task_Manager(Celery):
 
     _app = None              # Internal application reference
     _internal_tasks = {}     # Internal reference to all dynamically registered tasks [TODO - Class rather than dictionary]
-    
-    _cache = Cache()                       # Cache for task result
-    _cache_path = Cached_Task._cache_path  # Key to store them at in the cache
+   
+    _results_collection = Database_Task._collection     # Collection for task results
+    _results_cache_key  = Database_Task._cache_key      # Cache key for latest task result ID storage
 
     def _get_host(self):
         ''' Connection string for RabbitMQ '''
@@ -73,6 +79,18 @@ class Task_Manager(Celery):
             accept_content=['pickle']
         )
 
+    def _get_task_type(self, task_params:dict):
+        ''' Get the type of task to use (different task types store results in different ways)
+
+            The type is based on the `store_results` key, if it is present, possible values:
+              - 'all'    | Store all results in the database
+              - 'latest' | Store the last result in the database
+        '''
+
+        _type = task_params.get('store_results')
+        if _type == 'all': return Store_Task
+        if _type:          return Store_Latest_Task
+        return Task
 
     def register_tasks(self, tasks:dict):
         ''' Dynamically register all tasks specified in the `tasks` section of the application config with Celery '''
@@ -82,8 +100,11 @@ class Task_Manager(Celery):
             # Set the name of the function for the task to the task's name
             task_params['logic'].__name__ = task_name
 
+            # Get the type of task to create based on the task parameters
+            task_type = self._get_task_type(task_params)
+
             # Create and register a new Celery task with auto-caching results unless explicitely specified otherwise
-            new_task = self.task(task_params['logic'], name=task_name, result_serializer='pickle', base=Task if task_params.get('cache') == False else Cached_Task)
+            new_task = self.task(task_params['logic'], name=task_name, result_serializer='pickle', base=task_type)
             
             # Store a reference in the Task_Manager
             self._internal_tasks[task_name] = {'task': new_task, 'params': task_params}
@@ -105,8 +126,11 @@ class Task_Manager(Celery):
         task_name += '_chain'
         t.__name__ = task_name
 
+        # Get the type of task to create based on the task parameters
+        task_type = self._get_task_type(task_params)
+
         # Create a new task that invokes the chain of tasks when executed
-        new_task = self.task(t, name=task_name, result_serializer='pickle', ignore_result=True, base=Task if task_params.get('cache') == False else Cached_Task)
+        new_task = self.task(t, name=task_name, result_serializer='pickle', ignore_result=True, base=task_type)
         
         # Store an internal reference to the task chain's top-level task
         self._internal_tasks[task_name] = {'task': new_task, 'params': task_params}
@@ -151,14 +175,25 @@ class Task_Manager(Celery):
         return cls._app.send_task(task_name, *args, **kwargs)
 
 
+    def detect_change(self, database=None, collection=None, operations=['insert', 'update']):
+        ''' Detect a change on a Mongo collection '''
+
+        pipeline = [{'$match': {'operationType': {'$in': operations}}}]
+        with self.connect(database, collection).watch(pipeline) as stream:
+            for insert_change in stream:
+                return True
+
     @classmethod
     def run_task(cls, task_name:str, *args, **kwargs):
-        ''' Run an asynchronous task and get the result immediately '''
-        
-        # Send the task to the next available worker
-        cls.schedule_task(task_name, *args, **kwargs)
+        ''' Run an asynchronous task and get the result immediately (force synchronous)'''
 
-        # TODO - Wait for task completion
+        is_started = False
+        last_id = Cache().get_dynamic_dict_value(cls._results_cache_key, task_name)
+        while Cache().get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
+            if not is_started:
+                # Send the task to the next available worker
+                cls.schedule_task(task_name, *args, **kwargs)
+                is_started = True
 
         # Fetch the result from the cache and return
         return cls.get_result(task_name)
@@ -191,4 +226,8 @@ class Task_Manager(Celery):
     def get_result(cls, task_name):
         ''' Get the latest result of a task if it exists '''
 
-        return cls._cache.get_dynamic_dict_value(cls._cache_path, task_name)
+        result_id = Cache().get_dynamic_dict_value(cls._results_cache_key, task_name)
+        if result_id:
+            with Database(collection=cls._results_collection) as db:
+                res =  db.find_one({'_id': ObjectId(result_id)})
+                return res['task_result'] if res else res

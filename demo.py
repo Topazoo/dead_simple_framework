@@ -61,7 +61,7 @@ sample_config = {
             'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
             'schedule': {}, # Default - every minute
             'depends_on': 'add', # Return value substituted for `res`,
-            'cache': False # Disable caching
+            'store_results': 'latest' # Cache latest
         },
 
         'call_api': {   # API Call Task
@@ -71,6 +71,7 @@ sample_config = {
         'rand_add': {   # Simple Addition Task (with random arguments) 
             'logic': lambda: randint(0, 1000) + randint(1, 10000),
             'schedule': {},  # Default - every minute
+            'store_results': 'all' # Store all
         },
     }
 }

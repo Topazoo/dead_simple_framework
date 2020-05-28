@@ -60,13 +60,9 @@ class Cache:
 
         # Retrieve the dynamically cached dictionary
         result = self._redis.hget(dict_key, key)
-
-        # Correct the type using `json.loads()` if necessary
-
-        # TODO - Fix this, dictionary data is coming back in bad shape
         
         if result:
-            return self._fix_type(result).decode()
+            return result.decode()
 
 
     def get(self, key):
@@ -74,21 +70,9 @@ class Cache:
 
         # Retrieve the cached value and fix type if necessary
         try:
-            return self._fix_type(self._redis.get(key).decode())
+            return self._redis.get(key).decode()
 
         # Attempt to retrieve a dynamically cached dictionary on failure
         except ResponseError: 
-            return {x.decode(): self._fix_type(y.decode()) for x,y in  self._redis.hgetall(key).items()}
+            return {x.decode(): y.decode() for x,y in  self._redis.hgetall(key).items()}
 
-
-    def _fix_type(self, result):
-        ''' Attempt to reconstruct the result type '''
-
-        # Attempt to automatically correct dictionary  and list typing
-        if (result[0] == '{' and result[-1] == '}') or (result[0] == '[' and result[-1] == ']'):
-            try:
-                result = json.loads(result)
-            except:
-                pass
-           
-        return result
