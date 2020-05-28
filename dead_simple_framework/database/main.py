@@ -52,7 +52,7 @@ class Database:
 
         # Return the collection
         return self.CONNECTION.get_database(database).get_collection(collection)
-
+    
 
     def disconnect(self):
         ''' Disconnect from a database and collection '''
