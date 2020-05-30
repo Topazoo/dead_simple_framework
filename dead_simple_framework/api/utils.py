@@ -132,19 +132,21 @@ def sort_data(data: Cursor, request_params: dict) -> list:
     return data
 
 
-def insert_data(request_params: dict, database:str=None, collection:str=None):
+def insert_data(request_params: dict, database:str=None, collection:str=None) -> str:
     ''' Add data to the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
+        <-- [str] The ObjectId of the inserted data
     '''
 
     mongo_fields = request_params.copy()
     with Database(database,collection) as db:
-        return db.insert_one(mongo_fields)
+        return str(db.insert_one(mongo_fields).inserted_id)
 
 
-def update_data(request_params: dict, database:str=None, collection:str=None):
+def update_data(request_params: dict, database:str=None, collection:str=None) -> bool:
     ''' Add data to the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
+        <-- [bool] True if successful
     '''
 
     mongo_fields = request_params.copy()
@@ -152,19 +154,20 @@ def update_data(request_params: dict, database:str=None, collection:str=None):
     
     if _id:
         with Database(database,collection) as db:
-            return db.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields})
+            return db.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields}).acknowledged
     else:
         raise API_Error('No ID supplied', 400)
 
 
-def delete_data(request_params: dict, database:str=None, collection:str=None):
+def delete_data(request_params: dict, database:str=None, collection:str=None) -> bool:
     ''' Delete data from the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
+        <-- True if records were deleted
     '''
 
     mongo_fields = request_params.copy()
     if mongo_fields.get('_id'):
         with Database(database,collection) as db:
-            return db.delete_one({'_id': ObjectId(mongo_fields.pop('_id', None))})
+            return db.delete_one({'_id': ObjectId(mongo_fields.pop('_id', None))}).deleted_count > 0
     else:
         raise API_Error('No ID supplied', 400)

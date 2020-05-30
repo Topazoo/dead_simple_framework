@@ -11,6 +11,9 @@ import json
 # Utilities
 import os
 
+# Typing
+from typing import Union
+
 
 class Cache:
     ''' Client for caching task results or database queries '''
@@ -42,7 +45,7 @@ class Cache:
         self.cache_dict(key, value)
 
 
-    def cache_dynamic_dict(self, key, value:dict):
+    def cache_dynamic_dict(self, key:str, value:dict):
         ''' Store a python dictionary as a hash. Allows dictionary values to be updated without fetching the stored value '''
 
         # Attempt to insert the raw dictionary in Redis
@@ -55,7 +58,7 @@ class Cache:
             self._redis.hset(key, mapping=value)
 
 
-    def get_dynamic_dict_value(self, dict_key, key):
+    def get_dynamic_dict_value(self, dict_key:str, key:str) -> str:
         ''' Get a value from a cached dictionary stored with cache_dynamic_dict() '''
 
         # Retrieve the dynamically cached dictionary
@@ -65,7 +68,13 @@ class Cache:
             return result.decode()
 
 
-    def get(self, key):
+    def clear_dynamic_dict_value(self, dict_key:str, key:Union[list,str]):
+        ''' Delete a key or list of keys from a cached dictionary stored with cache_dynamic_dict() '''
+
+        self._redis.hdel(dict_key, *([key] if isinstance(key,str) else key))
+
+
+    def get(self, key:str) -> str:
         ''' Fetch data from the cache by key '''
 
         # Retrieve the cached value and fix type if necessary
@@ -76,3 +85,33 @@ class Cache:
         except ResponseError: 
             return {x.decode(): y.decode() for x,y in  self._redis.hgetall(key).items()}
 
+
+    def remove(self, key:Union[list,str]):
+        ''' Remove a stored key or list of keys '''
+
+        self._redis.delete(*([key] if isinstance(key,str) else key))
+
+
+    def keys(self, regex:str='*') -> list:
+        ''' View the keys stored in the cache or all keys matching a passed regular expression'''
+
+        return [k.decode() for k in self._redis.keys(regex)]
+
+
+    def view(self, regex:str='*') -> dict:
+        ''' View the entire contents of the cache or the keys+contents matching a passed regular expression '''
+        
+        return {k:self.get(k) for k in self.keys(regex)}
+
+
+    def flush(self, force=False):
+        ''' Flush the cache '''
+
+        self._redis.flushall(asynchronous=(not force))
+
+
+    def save_to_disk(self):
+        ''' Force-save the cache to disk '''
+
+        self._redis.save()
+        

@@ -22,7 +22,7 @@ class Database:
         self.collection = collection
 
 
-    def _get_host(self):
+    def _get_host(self) -> str:
         ''' Connection string for MongoDB '''
 
         # TODO - Allow config from dictionary
