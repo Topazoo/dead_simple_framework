@@ -185,7 +185,7 @@ class API:
             raise API_Error(f'Method [{method}] not allowed for route [{url}]', 405)
 
         # If the method doesn't have a handler assigned it isn't allowed
-        if method not in cls.HANDLER:
+        if method not in cls.HANDLER():
             raise API_Error(f'No hanlder for [{method}]', 405)
 
 
