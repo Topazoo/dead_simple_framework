@@ -95,10 +95,10 @@ class Cache:
     def keys(self, regex:str='*') -> list:
         ''' View the keys stored in the cache or all keys matching a passed regular expression'''
 
-        return self._redis.keys(regex)
+        return [k.decode() for k in self._redis.keys(regex)]
 
 
     def view(self, regex:str='*') -> dict:
         ''' View the entire contents of the cache or the keys+contents matching a passed regular expression '''
-
-        return {k:self._redis.get(k) for k in self.keys(regex)}
+        
+        return {k:self.get(k) for k in self.keys(regex)}

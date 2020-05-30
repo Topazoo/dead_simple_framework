@@ -1,4 +1,4 @@
-from dead_simple_framework import Application, Task_Manager, Database, API
+from dead_simple_framework import Application, Task_Manager, Database, API, Cache
 from random import randint
 # A sample backend specified as a dictionary
 
@@ -20,6 +20,14 @@ sample_config = {
             'template': None,
             'defaults': None,
             'logic': lambda: str(Task_Manager.run_task('add')),
+        },
+
+        '/cache': {    # View cache contents
+            'name': 'cache',
+            'methods': ['GET'],
+            'template': None,
+            'defaults': None,
+            'logic': lambda: str(Cache().view()),
         },
 
         '/insert': { # Another route with automatic CRUD support
