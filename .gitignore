@@ -142,3 +142,6 @@ test.py
 .DS_Store
 celerybeat-schedule
 .vscode
+
+# PyPi
+pypi/dead_simple_framework/
