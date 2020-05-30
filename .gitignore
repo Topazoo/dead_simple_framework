@@ -145,3 +145,4 @@ celerybeat-schedule
 
 # PyPi
 pypi/dead_simple_framework/
+dump.rdb
