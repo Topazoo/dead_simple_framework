@@ -3,8 +3,7 @@
 
 import setuptools
 
-
-with open('../README.md') as f:
+with open('README.md') as f:
     README = f.read()
 
 setuptools.setup(
@@ -20,5 +19,5 @@ setuptools.setup(
     python_requires=">=3.5",
     install_requires=['flask', 'pymongo', 'celery', 'flask-cors', 'requests'],
     long_description_content_type='text/markdown',
-    classifiers=[],
+    classifiers=[]
 )
