@@ -21,6 +21,10 @@ class API:
     ''' Internal HTTP requests handler for Flask routes '''
 
     ROUTES = {}
+
+    @property
+    def HANDLER():  # Supported auto-handling for routes
+        return {'GET': API.GET, 'POST': API.POST, 'PUT': API.PUT, 'DELETE': API.DELETE}
     
     @staticmethod
     def GET(request:Request, database:str=None, collection:str=None) -> Response:
@@ -173,6 +177,19 @@ class API:
 
 
     @classmethod
+    def _check_method(cls, url:str, method:str, route_config:dict):
+        ''' Ensure the method is allowed for a route or raise a 405 error '''
+
+        # If the method isn't listed in the route conig the user passed it isn't allowed
+        if method not in route_config['methods']:
+            raise API_Error(f'Method [{method}] not allowed for route [{url}]', 405)
+
+        # If the method doesn't have a handler assigned it isn't allowed
+        if method not in cls.HANDLER:
+            raise API_Error(f'No hanlder for [{method}]', 405)
+
+
+    @classmethod
     def main(cls) -> Response:
         ''' Called when the /api/ endpoint is sent an HTTP request. Delegates 
             to the appropriate handler based on the request method or returns a JSON
@@ -185,20 +202,14 @@ class API:
         # Get the configuration for the route that was accessed
         route_config = cls.ROUTES[str(request.url_rule)]
 
+        # Ensure the method is allowed
+        cls._check_method(str(request.url_rule), request.method, route_config)
+
         # Get the database/collection
-        database = route_config.get('database')
-        collection = route_config.get('collection')
+        database, collection = route_config.get('database'), route_config.get('collection')
         
-        # TODO - Enable restrictions based on config!!
         # Run CRUD handling
-        if request.method == 'GET':
-            data = API.GET(request, database, collection)
-        if request.method == 'POST':
-            data = API.POST(request, database, collection)
-        if request.method == 'PUT':
-            data = API.PUT(request, database, collection)
-        if request.method == 'DELETE':
-            data = API.DELETE(request, database, collection)
+        data = cls.HANDLER[request.method](request, database, collection)
 
         # Get the logic that should be run for this route (if any)
         delegate = route_config.get('logic')

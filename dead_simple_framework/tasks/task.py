@@ -38,9 +38,10 @@ class Database_Task(Task):
         ''' Stores the result of an asynchronous task in Mongo when it completes '''
 
         if not self._is_setup: 
-            self._setup()            # Perform initial setup if not done
+            self._setup()                               # Perform initial setup if not done
         
         self.success(retval, task_id, args, kwargs)     # Delegate storage logic to concrete subclasses
+    
     
     def success(self, retval, task_id, args, kwargs):
         ''' Abstract - Implemented by concrete Task classes '''

@@ -11,6 +11,9 @@ import json
 # Utilities
 import os
 
+# Typing
+from typing import Union
+
 
 class Cache:
     ''' Client for caching task results or database queries '''
