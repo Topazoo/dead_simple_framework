@@ -102,3 +102,16 @@ class Cache:
         ''' View the entire contents of the cache or the keys+contents matching a passed regular expression '''
         
         return {k:self.get(k) for k in self.keys(regex)}
+
+
+    def flush(self, force=False):
+        ''' Flush the cache '''
+
+        self._redis.flushall(asynchronous=(not force))
+
+
+    def save_to_disk(self):
+        ''' Force-save the cache to disk '''
+
+        self._redis.save()
+        
