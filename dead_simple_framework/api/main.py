@@ -22,9 +22,9 @@ class API:
 
     ROUTES = {}
 
-    @property
-    def HANDLER():  # Supported auto-handling for routes
-        return {'GET': API.GET, 'POST': API.POST, 'PUT': API.PUT, 'DELETE': API.DELETE}
+    @classmethod
+    def HANDLER(cls):  # Supported auto-handling for routes
+        return {'GET': cls.GET, 'POST': cls.POST, 'PUT': cls.PUT, 'DELETE': cls.DELETE}
     
     @staticmethod
     def GET(request:Request, database:str=None, collection:str=None) -> Response:
@@ -209,7 +209,7 @@ class API:
         database, collection = route_config.get('database'), route_config.get('collection')
         
         # Run CRUD handling
-        data = cls.HANDLER[request.method](request, database, collection)
+        data = cls.HANDLER()[request.method](request, database, collection)
 
         # Get the logic that should be run for this route (if any)
         delegate = route_config.get('logic')
