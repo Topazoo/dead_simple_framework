@@ -17,7 +17,7 @@ from bson import ObjectId
 from ..cache import Cache
 
 # Utilities
-from celery import chain
+from celery import chain, group
 import os, json
 
 # Debug
@@ -79,7 +79,8 @@ class Task_Manager(Celery):
             accept_content=['pickle']
         )
 
-    def _get_task_type(self, task_params:dict):
+    @staticmethod
+    def _get_task_type(task_params:dict):
         ''' Get the type of task to use (different task types store results in different ways)
 
             The type is based on the `store_results` key, if it is present, possible values:
@@ -221,6 +222,24 @@ class Task_Manager(Celery):
         # Create a chain of tasks allowing the argument of the first to be passed to the next and so on
         return chain(*dependants)()
 
+
+    @classmethod
+    def parallelize(cls, tasks, sync=False):
+        ''' Takes a list of tasks (in the same format as `schedule_task`) and runs them simultaneously '''
+
+        to_run = []
+        for task in tasks:
+            task_name, args, kwargs = task[0], task[1] if len(task) > 1 else [], task[2] if len(task) > 2 else {}
+            task_obj = cls._internal_tasks[task_name]['task']
+            task_params = cls._internal_tasks[task_name]['params']
+
+            to_run.append(task_obj.s(*args, **kwargs))
+
+        runner = group(to_run)
+        if sync:
+            return runner().get()
+        else:
+            return runner()
 
     @classmethod 
     def get_result(cls, task_name):
