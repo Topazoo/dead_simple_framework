@@ -52,7 +52,7 @@ class Task_Manager(Celery):
         return f"amqp://{username}:{password}@{host}:{port}/"
 
 
-    def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend='rpc://', amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=True, **kwargs):
+    def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend='redis://localhost:6379/0', amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=True, **kwargs):
         # Attach to RabbitMQ to allow tasks to be sent to/processed by any available worker
         broker = self._get_host()
         
@@ -60,7 +60,7 @@ class Task_Manager(Celery):
         super().__init__(main='dead_simple_framework', loader=loader, backend=backend, amqp=amqp, events=events, log=log, control=control, set_as_current=set_as_current, tasks=tasks, broker=broker, include=include, changes=changes, config_source=config_source, fixups=fixups, task_cls=task_cls, autofinalize=autofinalize, namespace=namespace, strict_typing=strict_typing, **kwargs)
         
         # Set Pickle as the task result serializer
-        self.register_serializer()
+        self.configure()
 
         # Register all tasks specified in the `tasks` section of the application config
         if dynamic_tasks:
@@ -68,12 +68,14 @@ class Task_Manager(Celery):
 
         Task_Manager._app = self
 
-    
-    def register_serializer(self):
-        ''' Register Pickle as the serializer for task results '''
+    def configure(self):
+        ''' Optimize Celery configuration '''
 
-        # Update the Celery configuration
+        # Optimize the Celery configuration and set results serializer
         self.conf.update(
+            task_create_missing_queues = True,
+            task_acks_late = True,
+            worker_prefetch_multiplier = 1,
             task_serializer='pickle',
             result_serializer='pickle',
             accept_content=['pickle']
@@ -181,23 +183,25 @@ class Task_Manager(Celery):
 
 
     @classmethod
-    def run_task(cls, task_name:str, *args, **kwargs):
+    def run_task(cls, task_name:str, sync=True, *args, **kwargs):
         # TODO - Timeouts
-        ''' Run an asynchronous task and get the result immediately (force synchronous)'''
+        ''' Run an asynchronous task. Gets the result immediately if sync=True (force synchronous)'''
 
-        cache = Cache()
+        if sync:
+            cache = Cache()
+            is_started = False
+            last_id = cache.get_dynamic_dict_value(cls._results_cache_key, task_name)
+            # Wait for ID of cached result to update then return
+            while cache.get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
+                if not is_started:
+                    # Send the task to the next available worker once
+                    cls.schedule_task(task_name, *args, **kwargs)
+                    is_started = True
 
-        is_started = False
-        last_id = cache.get_dynamic_dict_value(cls._results_cache_key, task_name)
-        # Wait for ID of cached result to update then return
-        while cache.get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
-            if not is_started:
-                # Send the task to the next available worker once
-                cls.schedule_task(task_name, *args, **kwargs)
-                is_started = True
+            # Fetch the result from the cache and return
+            return cls.get_result(task_name)
 
-        # Fetch the result from the cache and return
-        return cls.get_result(task_name)
+        return cls.schedule_task(task_name, *args, **kwargs)
 
 
     @classmethod
@@ -236,10 +240,7 @@ class Task_Manager(Celery):
             to_run.append(task_obj.s(*args, **kwargs))
 
         runner = group(to_run)
-        if sync:
-            return runner().get()
-        else:
-            return runner()
+        return runner().get() if sync else runner().delay()
 
     @classmethod 
     def get_result(cls, task_name):
