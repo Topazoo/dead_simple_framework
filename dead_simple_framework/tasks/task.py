@@ -1,12 +1,11 @@
 # Database
 from ..database import Database
-from bson import ObjectId
-
-# Cache
-from ..cache import Cache
 
 # Celery
 from celery import Task
+
+# Utilities
+from .utils import insert_persistently_and_cache, upsert_persistently_and_cache
 
 # Errors
 from pymongo.errors import InvalidDocument
@@ -53,23 +52,15 @@ class Store_Task(Database_Task):
     def success(self, retval, task_id, args, kwargs):
         ''' Stores the result of an asynchronous task in Mongo when it completes '''
 
-        # Store the result in MongoDB for retrieval with `Task_Manager.get_result()`
-        with Database(collection=self._collection) as db:
-            try:
-                res = db.insert_one({
-                    'task_name': self.name,
-                    'task_id': str(task_id),
-                    'task_result': retval
-                })
-            except InvalidDocument as e:
-                res = db.insert_one({
-                    'task_name': self.name,
-                    'task_id': str(task_id),
-                    'task_result': str(retval)
-                })
-
-        Cache().cache_dynamic_dict(self._cache_key, {self.name: str(res.inserted_id)})
-
+        data = {'task_name': self.name, 'task_id': str(task_id), 'task_result': retval}
+        try:
+            # Store the result in MongoDB for retrieval with `Task_Manager.get_result()`
+            insert_persistently_and_cache(self._collection, self._cache_key, data, self.name)
+        except InvalidDocument as e:
+            # Coerce task result to string if it can't be serialized 
+            data = {'task_name': self.name, 'task_id': str(task_id), 'task_result': str(retval)}
+            insert_persistently_and_cache(self._collection, self._cache_key, data, self.name)
+        
 
 class Store_Latest_Task(Database_Task):
     ''' Celery task that persistently stores the latest result in the database '''
@@ -77,22 +68,12 @@ class Store_Latest_Task(Database_Task):
     def success(self, retval, task_id, args, kwargs):
         ''' Stores the result of an asynchronous task in Mongo when it completes '''
 
-        _id = Cache().get_dynamic_dict_value(self._cache_key, self.name) or ObjectId()
-
-        # Store the result in MongoDB for retrieval with `Task_Manager.get_result()`
-        with Database(collection=self._collection) as db:
-            db.delete_one({'_id': ObjectId(_id)})
-            try:
-                res = db.insert_one({
-                    'task_name': self.name,
-                    'task_id': str(task_id),
-                    'task_result': retval
-                })
-            except InvalidDocument as e:
-                res = db.insert_one({
-                    'task_name': self.name,
-                    'task_id': str(task_id),
-                    'task_result': str(retval)
-                })
+        data = {'task_name': self.name, 'task_id': str(task_id), 'task_result': retval}
+        try:
+            # Store the result in MongoDB for retrieval with `Task_Manager.get_result()`
+            upsert_persistently_and_cache(self._collection, self._cache_key, data, self.name)
+        except InvalidDocument as e:
+            # Coerce task result to string if it can't be serialized 
+            data = {'task_name': self.name, 'task_id': str(task_id), 'task_result': str(retval)}
+            upsert_persistently_and_cache(self._collection, self._cache_key, data, self.name)
         
-        Cache().cache_dynamic_dict(self._cache_key, {self.name: str(res.inserted_id)})

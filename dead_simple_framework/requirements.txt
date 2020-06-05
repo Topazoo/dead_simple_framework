@@ -4,3 +4,4 @@ celery==4.4.2
 Flask-Cors==3.0.8
 requests>=2.23.0
 redis>=3.5.2
+eventlet==0.25.2

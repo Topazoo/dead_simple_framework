@@ -28,19 +28,19 @@ class API:
                 "Cache-Control": "no-cache"
             })
 
-            # Check for errors
-            if result.status_code != 200:
-                if not ignore_errors:
-                    raise API_Client_Error(url, 'GET', result.status_code)
-                else:
-                    return None
+            if result:
+                if result.status_code != 200:
+                    if not ignore_errors:
+                        raise API_Client_Error(url, 'GET', result.status_code)
+                    elif result.status_code != 503:
+                        return None
 
-            # Check for actual result
-            if result.text:
-                return result
+                # Check for actual result
+                if result.text:
+                    return result
 
-            # Otherwise wait, then rety
-            sleep(retry_ms/1000)
+                # Otherwise wait, then rety
+                sleep(retry_ms/1000)
 
         return result if result.text else None
 
