@@ -112,7 +112,7 @@ class Task_Manager(Celery):
             task_type = self._get_task_type(task_params)
 
             # Create and register a new Celery task with auto-caching results unless explicitely specified otherwise
-            new_task = self.task(task_params['logic'], name=task_name, result_serializer='pickle', base=task_type, ignore_results=False)
+            new_task = self.task(task_params['logic'], name=task_name, result_serializer='pickle', base=task_type, ignore_result=True if task_params.get('schedule') else False)
             
             # Store a reference in the Task_Manager
             self._internal_tasks[task_name] = {'task': new_task, 'params': task_params}
@@ -138,7 +138,7 @@ class Task_Manager(Celery):
         task_type = self._get_task_type(task_params)
 
         # Create a new task that invokes the chain of tasks when executed
-        new_task = self.task(t, name=task_name, result_serializer='pickle', ignore_result=False, base=task_type, ignore_results=True)
+        new_task = self.task(t, name=task_name, result_serializer='pickle', base=task_type, ignore_result=False)
         
         # Store an internal reference to the task chain's top-level task
         self._internal_tasks[task_name] = {'task': new_task, 'params': task_params}
@@ -181,7 +181,7 @@ class Task_Manager(Celery):
         if not args and default_args:
             args = (default_args,)
 
-        return cls._app.send_task(task_name, *args, **kwargs)
+        return cls._app.send_task(task_name, *args, **kwargs, ignore_result=True)
 
 
     @classmethod

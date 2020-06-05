@@ -1,4 +1,4 @@
-''' Shared utility functions for managing tasks '''
+''' Shared utility functions for task result storage/caching '''
 
 # Database
 from ..database import Database
@@ -10,7 +10,6 @@ from ..cache import Cache
 
 def cache_mongo_id(_id:ObjectId, cache_key:str, cache_sub_key:str=None):
     ''' Cache the ID of persistently stored data '''
-
 
     Cache().cache_dynamic_dict(cache_key, {cache_sub_key: str(_id)}) if cache_sub_key else Cache().cache_string(cache_key, str(_id))
 
