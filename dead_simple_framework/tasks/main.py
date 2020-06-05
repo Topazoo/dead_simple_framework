@@ -39,8 +39,8 @@ class Task_Manager(Celery):
     _results_collection = Database_Task._collection     # Collection for task results
     _results_cache_key  = Database_Task._cache_key      # Cache key for latest task result ID storage
 
-    def _get_host(self):
-        ''' Connection string for RabbitMQ '''
+    def _get_ampq_host(self):
+        ''' Connection string for RabbitMQ broker '''
 
         # TODO - Allow config from dictionary
 
@@ -52,10 +52,19 @@ class Task_Manager(Celery):
 
         return f"amqp://{username}:{password}@{host}:{port}/"
 
+    def _get_redis_host(self):
+        ''' Connection string for Redis results backend '''
 
-    def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend='redis://localhost:6379/0', amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=False, **kwargs):
+        host=os.environ.get('REDIS_HOST', 'localhost')
+        port=os.environ.get('REDIS_PORT', '6379')
+        db = os.environ.get('REDIS_DB', '0')
+
+        return f'redis://{host}:{port}/{db}'
+
+
+    def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend=None, amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=False, **kwargs):
         # Attach to RabbitMQ to allow tasks to be sent to/processed by any available worker
-        broker = self._get_host()
+        broker, backend = self._get_ampq_host(), self._get_redis_host()
         
         # Override path to tasks to simplify invoking Celery from the command line
         super().__init__(main='dead_simple_framework', loader=loader, backend=backend, amqp=amqp, events=events, log=log, control=control, set_as_current=set_as_current, tasks=tasks, broker=broker, include=include, changes=changes, config_source=config_source, fixups=fixups, task_cls=task_cls, autofinalize=autofinalize, namespace=namespace, strict_typing=strict_typing, **kwargs)
