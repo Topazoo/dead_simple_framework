@@ -17,6 +17,7 @@ from bson import ObjectId
 from ..cache import Cache
 
 # Utilities
+from .utils import upsert_persistently_and_cache
 from celery import chain, group
 import os, json
 
@@ -52,7 +53,7 @@ class Task_Manager(Celery):
         return f"amqp://{username}:{password}@{host}:{port}/"
 
 
-    def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend='redis://localhost:6379/0', amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=True, **kwargs):
+    def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend='redis://localhost:6379/0', amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=False, **kwargs):
         # Attach to RabbitMQ to allow tasks to be sent to/processed by any available worker
         broker = self._get_host()
         
@@ -76,6 +77,7 @@ class Task_Manager(Celery):
             task_create_missing_queues = True,
             task_acks_late = True,
             worker_prefetch_multiplier = 1,
+            result_expires = 1,
             task_serializer='pickle',
             result_serializer='pickle',
             accept_content=['pickle']
@@ -110,7 +112,7 @@ class Task_Manager(Celery):
             task_type = self._get_task_type(task_params)
 
             # Create and register a new Celery task with auto-caching results unless explicitely specified otherwise
-            new_task = self.task(task_params['logic'], name=task_name, result_serializer='pickle', base=task_type)
+            new_task = self.task(task_params['logic'], name=task_name, result_serializer='pickle', base=task_type, ignore_results=False)
             
             # Store a reference in the Task_Manager
             self._internal_tasks[task_name] = {'task': new_task, 'params': task_params}
@@ -126,7 +128,7 @@ class Task_Manager(Celery):
         _task_name = task_name
 
         # Create a new function that creates the task chain when called
-        t = lambda x=None: self.create_chain(_task_name, task_params.get('args', []), task_params.get('kwargs', {}))
+        t = lambda x=None: self.chain(_task_name, task_params.get('args', []), task_params.get('kwargs', {}))
         
         # Add a unique suffix for the function and chained task
         task_name += '_chain'
@@ -136,7 +138,7 @@ class Task_Manager(Celery):
         task_type = self._get_task_type(task_params)
 
         # Create a new task that invokes the chain of tasks when executed
-        new_task = self.task(t, name=task_name, result_serializer='pickle', ignore_result=True, base=task_type)
+        new_task = self.task(t, name=task_name, result_serializer='pickle', ignore_result=False, base=task_type, ignore_results=True)
         
         # Store an internal reference to the task chain's top-level task
         self._internal_tasks[task_name] = {'task': new_task, 'params': task_params}
@@ -172,7 +174,7 @@ class Task_Manager(Celery):
         
         # Check to see if the relies on sub-tasks and must be chained 
         if cls._internal_tasks[task_name]['params'].get('depends_on'):
-            return cls._app.create_chain(task_name, args, kwargs)
+            return cls._app.chain(task_name, args, kwargs)
         
         # Apply default arguments if none provided
         default_args = cls._internal_tasks[task_name]['params'].get('args')
@@ -187,25 +189,25 @@ class Task_Manager(Celery):
         # TODO - Timeouts
         ''' Run an asynchronous task. Gets the result immediately if sync=True (force synchronous)'''
 
-        if sync:
-            cache = Cache()
-            is_started = False
-            last_id = cache.get_dynamic_dict_value(cls._results_cache_key, task_name)
-            # Wait for ID of cached result to update then return
-            while cache.get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
-                if not is_started:
-                    # Send the task to the next available worker once
-                    cls.schedule_task(task_name, *args, **kwargs)
-                    is_started = True
+        if not sync: return cls.schedule_task(task_name, *args, **kwargs)
 
-            # Fetch the result from the cache and return
-            return cls.get_result(task_name)
+        cache = Cache()
 
-        return cls.schedule_task(task_name, *args, **kwargs)
+        is_started = False
+        last_id = cache.get_dynamic_dict_value(cls._results_cache_key, task_name)
+        # Wait for ID of cached result to update then return
+        while cache.get_dynamic_dict_value(cls._results_cache_key, task_name) == last_id:
+            if not is_started:
+                # Send the task to the next available worker once
+                cls.schedule_task(task_name, *args, **kwargs)
+                is_started = True
+
+        # Fetch the result from the cache and return
+        return cls.get_result(task_name)
 
 
     @classmethod
-    def create_chain(cls, task_name:str, *args, **kwargs) ->list:
+    def chain(cls, task_name:str, *args, **kwargs) ->list:
         ''' Form a chain of dependant sub-tasks for a given task '''
 
         # Get the top level task and its parameters
@@ -228,19 +230,26 @@ class Task_Manager(Celery):
 
 
     @classmethod
-    def parallelize(cls, tasks, sync=False):
-        ''' Takes a list of tasks (in the same format as `schedule_task`) and runs them simultaneously '''
+    def parallelize(cls, tasks, cache_as:str=None):
+        ''' Takes a list of tasks (in the same format as `schedule_task()`) and runs them in parallel 
+            If `cache_as` is set, the result will be cached as if it were a task and will be accessible via `
+        '''
 
         to_run = []
         for task in tasks:
             task_name, args, kwargs = task[0], task[1] if len(task) > 1 else [], task[2] if len(task) > 2 else {}
-            task_obj = cls._internal_tasks[task_name]['task']
-            task_params = cls._internal_tasks[task_name]['params']
-
+            task_obj, task_params = cls._internal_tasks[task_name]['task'], cls._internal_tasks[task_name]['params']
             to_run.append(task_obj.s(*args, **kwargs))
 
-        runner = group(to_run)
-        return runner().get() if sync else runner().delay()
+        task = group(to_run).apply_async()
+        result = task.get()
+
+        if cache_as:
+            data = {'task_name': cache_as, 'task_id': str(task.id), 'task_result': result}
+            upsert_persistently_and_cache(cls._results_collection, cls._results_cache_key, data, cache_as)
+        
+        return result
+
 
     @classmethod 
     def get_result(cls, task_name):
@@ -258,4 +267,4 @@ class Task_Manager(Celery):
         ''' Get all stored results for a task '''
 
         with Database(collection=cls._results_collection) as db:
-            return list(db.find({'task_name': task_name}))
+            return [res['task_result'] for res in list(db.find({'task_name': task_name}))]
