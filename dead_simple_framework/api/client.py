@@ -25,7 +25,14 @@ class API:
             # Send the request
             result = requests.get(url, headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36",
-                "Cache-Control": "no-cache"
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Pragma": "no-cache",
+                "DNT": '1',
+                "Upgrade-Insecure-Requests": '1',
+                "Accept": "*/*",
+                "Accept-Encoding": "gzip, deflate",
+                "Accept-Language": "en-US,en;q=0.9"
             })
 
             if result:

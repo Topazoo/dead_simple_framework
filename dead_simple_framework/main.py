@@ -16,7 +16,7 @@ import os
 
 # Debug
 import logging
-  
+
 
 class Application(Task_Manager):
     ''' Main application driver
