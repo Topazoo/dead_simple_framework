@@ -190,6 +190,7 @@ class Task_Manager(Celery):
         if not args and default_args:
             args = (default_args,)
 
+        # Drop the result in Celery/Redis as we're relying on the framework to cache them
         return cls._app.send_task(task_name, *args, **kwargs, ignore_result=True)
 
 
@@ -245,14 +246,18 @@ class Task_Manager(Celery):
         '''
 
         to_run = []
-        for task in tasks:
+        for task in tasks: # Create signature (with args) for every task being run in parallel
             task_name, args, kwargs = task[0], task[1] if len(task) > 1 else [], task[2] if len(task) > 2 else {}
             task_obj, task_params = cls._internal_tasks[task_name]['task'], cls._internal_tasks[task_name]['params']
             to_run.append(task_obj.s(*args, **kwargs))
 
+        # Run the task and immediately get the result
         task = group(to_run).apply_async()
-        result = task.get()
 
+        # Allow sync subtasks in the event `parallelize` is used within another task
+        result = task.get(disable_sync_subtasks=False)
+
+        # Cache the data like a regular task if specified
         if cache_as:
             data = {'task_name': cache_as, 'task_id': str(task.id), 'task_result': result}
             upsert_persistently_and_cache(cls._results_collection, cls._results_cache_key, data, cache_as)
@@ -264,8 +269,9 @@ class Task_Manager(Celery):
     def get_result(cls, task_name):
         ''' Get the latest result of a task if it exists '''
 
+        # Get the database record ID of the task result from the cache
         result_id = Cache().get_dynamic_dict_value(cls._results_cache_key, task_name)
-        if result_id:
+        if result_id: # Use it to retrieve the result
             with Database(collection=cls._results_collection) as db:
                 res =  db.find_one({'_id': ObjectId(result_id)})
                 return res['task_result'] if res else res

@@ -90,11 +90,11 @@ class API:
             # Remove any passed _id and insert in the database [TODO - allow? Maybe a config option?]
             if payload:
                 payload.pop('_id', None)
-                ins = insert_data(payload, database, collection)
+                inserted_id = insert_data(payload, database, collection)
             else:
                 raise API_Error('No data supplied to POST', 500)
 
-            return JsonResponse({'_id': str(ins.inserted_id)}, code=200)
+            return JsonResponse({'_id': str(inserted_id)}, code=200)
 
         except Exception as e:
             if os.environ.get('APP_ENV') == 'development':
