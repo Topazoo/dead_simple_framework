@@ -11,6 +11,7 @@ class JSON_Encoder(JSONEncoder):
         try:                # Attempt regular serialization
             obj = JSONEncoder.default(self, obj)
         except TypeError:   # Write as string on failure
+            # TODO - [Logging] | Throw a warning when this occurs
             obj = str(obj)
             
             return obj

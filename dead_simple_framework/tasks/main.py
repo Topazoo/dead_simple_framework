@@ -24,6 +24,14 @@ import os, json
 # Debug
 import logging
 
+# TODO - [Stability]     | Warnings + (Dummy `Task_Manager` if RabbitMQ isn't running [use multiprocess])?
+# TODO - [Stability]     | RPC backend if Redis isn't running
+# TODO - [Stability]     | Timeouts for all tasks (especially sync tasks)
+# TODO - [Useability]    | Retreival method for failed tasks
+# TODO - [Useability]    | Use `Celery` via adapter to hide unwanted methods/attributes
+# TODO - [Useability]     | TaskConfig class to allow a task to be created with hinting/linting enabled
+# TODO - [Extendability] | Allow ampq/results backend/celery config to be set in app config, use env as a redundancy
+
 
 class Task_Manager(Celery):
     ''' Client for managing asynchronous tasks 
@@ -41,8 +49,6 @@ class Task_Manager(Celery):
 
     def _get_ampq_host(self):
         ''' Connection string for RabbitMQ broker '''
-
-        # TODO - Allow config from dictionary
 
         # Check the environment for a custom config, then default to localhost
         host = os.environ.get('RABBITMQ_HOST', 'localhost')
@@ -196,7 +202,6 @@ class Task_Manager(Celery):
 
     @classmethod
     def run_task(cls, task_name:str, sync=True, *args, **kwargs):
-        # TODO - Timeouts
         ''' Run an asynchronous task. Gets the result immediately if sync=True (force synchronous)'''
 
         if not sync: return cls.schedule_task(task_name, *args, **kwargs)

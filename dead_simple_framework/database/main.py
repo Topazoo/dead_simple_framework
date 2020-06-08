@@ -5,10 +5,12 @@ from pymongo.collection import Collection
 # Utilities
 import os
 
+# TODO - [Stability]     | Warnings + (Dummy `Database` if MongoDB isn't running)?
+# TODO - [Stability]     | Timeouts + Automatic retries
+# TODO - [Extendability] | Initial indexes, host and other config from main app config
+# TODO - [Useability]    | Allow `connect()` and `disconnect()` as class methods
 
 class Database:
-    # TODO - This can be made more static
-
     ''' Client to store and retrieve dictionary data from the database '''
 
     # Default database/collection pulled from the environment but defaults to these
@@ -24,8 +26,6 @@ class Database:
 
     def _get_host(self) -> str:
         ''' Connection string for MongoDB '''
-
-        # TODO - Allow config from dictionary
 
         auth_str = os.environ.get('MONGODB_HOSTNAME', 'localhost')
         if os.environ.get('MONGODB_USERNAME') and os.environ.get('MONGODB_PASSWORD'):
@@ -65,7 +65,6 @@ class Database:
     def __enter__(self) -> Collection:
        return self.connect()
        
+
     def __exit__(self, exception_type, exception_value, traceback):
         self.disconnect()
-    
-

@@ -16,6 +16,8 @@ import json
 # Utilities
 import os
 
+# TODO - [Useability]    | Authentication request/verification
+# TODO - [Extendability] | Get debug settings from main app config, fallback on env
 
 class API:
     ''' Internal HTTP requests handler for Flask routes '''
