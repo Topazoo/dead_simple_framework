@@ -29,6 +29,8 @@ class API:
             # Try the request up to `num_retries` times
             for x in range(0, num_retries):
                 result = session.send(session.prepare_request(requests.Request(method, url, headers=cls.HEADERS)))
+                if result.status_code == 400: # Fetch again on 400's
+                    result = session.send(session.prepare_request(requests.Request(method, url, headers=cls.HEADERS)))
 
                 # If there is a result
                 if result:
