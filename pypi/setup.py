@@ -1,5 +1,5 @@
 
-"""Setup for the Dead Simple Framework"""
+"""Setup for Dead Simple Framework"""
 
 import setuptools
 
@@ -12,12 +12,12 @@ setuptools.setup(
     name='dead_simple_framework',
     license="MIT",
     description='Specify APIs with a Python dict and run with one line',
-    version='v0.3.1',
+    version='v0.3.2',
     long_description=README,
     url='https://github.com/Topazoo/dead_simple_framework',
     packages=setuptools.find_packages(),
     python_requires=">=3.5",
-    install_requires=['flask', 'pymongo', 'celery', 'flask-cors', 'requests'],
+    install_requires=['flask', 'pymongo', 'celery', 'flask-cors', 'requests', 'redis', 'eventlet', 'pyOpenSSL'],
     long_description_content_type='text/markdown',
     classifiers=[]
 )
