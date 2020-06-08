@@ -10,6 +10,7 @@ from .errors import API_Client_Error
 # Utilities
 from time import sleep
 
+# TODO - [Stability]     | Timeouts
 
 class API:
     ''' Client for making HTTP requests  '''
@@ -90,4 +91,3 @@ class API:
 
         # Extract data into dictionary
         return res.json() if res else {}
-

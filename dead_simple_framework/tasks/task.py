@@ -13,6 +13,12 @@ from pymongo.errors import InvalidDocument
 # Debug
 import logging
 
+# TODO - [Logging]       | Combine failure logging with main app stderr if possible?
+# TODO - [Stability]     | Automatic retry
+# TODO - [Useability]    | Storage of failed tasks for easy retreival [configurable]
+# TODO - [Extendability] | Allow results collection and cache key to be overridden
+# TODO - [Extendability] | Allow results to be cached directly [new task class]
+
 
 class Database_Task(Task):
     ''' Base Celery task for storing results in the database '''
@@ -21,7 +27,7 @@ class Database_Task(Task):
     _cache_key =   '_task_results_'  # Cache key to store latest result ID (so you don't need to watch Mongo collections)
     _is_setup = False
 
-    # TODO - Distinct task ID field
+    # TODO - Distinct task ID field?
 
     def _setup(self):
         ''' Perform database optimizations (once) '''

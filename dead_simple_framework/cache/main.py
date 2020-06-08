@@ -14,11 +14,16 @@ import os
 # Typing
 from typing import Union
 
+# TODO - [Stability]     | Dummy cache if Redis not running
+# TODO - [Stability]     | Timeouts + Automatic retries
+# TODO - [Useability]    | Allow serialization/deserialization and storage of typed data
+# TODO - [Useability]    | Allow serialization/deserialization and storage of typed data
+# TODO - [Useability]    | Support for lists (queues)
+# TODO - [Extendability] | Redis host string and other config (dump to disk settings) from main app config, env as fallback
+
 
 class Cache:
     ''' Client for caching task results or database queries '''
-
-    # TODO - Dynamic list support
 
     def __init__(self):
         # Connect to Redis

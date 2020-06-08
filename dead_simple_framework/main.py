@@ -17,6 +17,8 @@ import os
 # Debug
 import logging
 
+# TODO - [Logging] | Configure application wide logging
+# TODO - [Useability] | Use `Task_Manager` via adapter to hide unwanted methods/attributes 
 
 class Application(Task_Manager):
     ''' Main application driver
@@ -29,7 +31,6 @@ class Application(Task_Manager):
      '''
 
     _app = None     # Internal reference - Hacky way to allow classmethods to access a global state (probably a bad idea)
-
 
     def __init__(self, config:dict, debug=True):
         ''' Initialize the server based on the configuration dictionary (see sample.py) '''
@@ -47,8 +48,8 @@ class Application(Task_Manager):
         # Initialize inherited asynchronous task management ability
         super().__init__(dynamic_tasks=config['tasks'])
 
-        if debug:
-            CORS(self.app) # TODO - Don't do this, set allow in config later
+        # TODO - [Stability] | Allow this to be set in the main application configuration
+        if debug: CORS(self.app)
 
         Application._app = self
 
@@ -57,10 +58,3 @@ class Application(Task_Manager):
         ''' Runs the server '''
 
         self.app.run(host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'), debug=(os.environ.get('APP_DEBUG') == 'True'))
-
-
-    @classmethod
-    def run_task(cls, task_name:str, *args, **kwargs):
-        ''' Run an asynchronous task specified in the application config's `tasks` section '''
-
-        return cls._app.send_task(task_name, *args, **kwargs)
