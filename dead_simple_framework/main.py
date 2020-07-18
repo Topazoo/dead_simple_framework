@@ -33,10 +33,13 @@ class Application(Task_Manager):
     _app = None     # Internal reference - Hacky way to allow classmethods to access a global state (probably a bad idea)
 
     def __init__(self, config:dict, debug=True):
-        ''' Initialize the server based on the configuration dictionary (see sample.py) '''
+        ''' Initialize the server based on the configuration dictionary 
+        
+
+        '''
 
         # Create Flask application
-        self.app = Flask(__name__) 
+        self.app = Flask(__name__)
 
         # Register a custom encoder for JSON serialization
         # [Note] - This currently just bypasses errors by casting the offending data to a string :)

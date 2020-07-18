@@ -1,11 +1,36 @@
-from dead_simple_framework import Application, Task_Manager, Database, API, Cache
-from random import randint
-# A sample backend specified as a dictionary
+from dead_simple_framework import Application, Task_Manager, Database, API
+from random import choice
+
+WEBSITES =[
+    "http://www.google.com",
+    "http://www.yahoo.com",
+    "http://www.ebay.com",
+    "http://www.cnn.com",
+    "http://www.pbs.org",
+    "https://www.reddit.com/",
+]
+
+def get_websites(n):
+    _websites = [*WEBSITES]
+    res = []
+    for x in range(n):
+        res.append(choice(_websites))
+        _websites.remove(res[-1])
+
+    return res
+
 
 sample_config = {
-    'routes': { # HTTP Routes available 
-        
-        '/demo': { # Route with automatic CRUD support
+    'routes': {
+        '/insert': { # Another route with automatic CRUD support
+            'name': 'insert',
+            'methods': ['GET', 'POST', 'DELETE', 'PUT'],
+            'template': None,
+            'defaults': None,
+            'logic': None,
+            'collection': 'demo'
+        },
+        '/demo': { # Another route with automatic CRUD support
             'name': 'demo',
             'methods': ['GET', 'POST', 'DELETE', 'PUT'],
             'template': None,
@@ -13,82 +38,54 @@ sample_config = {
             'logic': None,
             'collection': 'demo'
         },
-
-        '/': {    # Route that runs an async task (addition)
-            'name': 'index',
-            'methods': ['GET'],
-            'template': None,
-            'defaults': None,
-            'logic': lambda: str(Task_Manager.run_task('add')),
-        },
-
-        '/cache': {    # View cache contents
-            'name': 'cache',
-            'methods': ['GET'],
-            'template': None,
-            'defaults': None,
-            'logic': lambda: str(Cache().view()),
-        },
-
-        '/insert': { # Another route with automatic CRUD support
-            'name': 'insert',
-            'methods': ['GET', 'POST', 'DELETE', 'PUT'],
-            'template': None,
-            'defaults': None,
-            'logic': None,
-            'collection': 'insert'
-        },
-
-        '/call': {  # Route that runs an async task (API call)
+        '/api/refresh': {  # Route that runs an async task (API call)
             'name': 'call',
             'methods': ['GET'],
             'template': None,
             'defaults': None,
-            'logic': lambda: str(Task_Manager.schedule_task('call_api', ['http://services.runescape.com/m=itemdb_oldschool/api/catalogue/detail.json', {'item': 56}])),
+            'logic': lambda: str(Task_Manager.run_task('scheduled_call')),
         },
-
-        '/last': {  # Route that fetches a cached result from a scheduled task
-            'name': 'last_add',
+        '/': {  # Route that fetches the last result of an async task (API call)
+            'name': 'call_cached',
             'methods': ['GET'],
             'template': None,
             'defaults': None,
-            'logic': lambda: str(Task_Manager.get_result('rand_add'))
+            'logic': lambda: str(Task_Manager.get_result('scheduled_call'))
+        },
+        '/add': {  # Route that fetches the last result of an async task (API call)
+            'name': 'add',
+            'methods': ['GET'],
+            'template': None,
+            'defaults': None,
+            'logic': lambda: str(Task_Manager.run_task('add'))
         },
     },
 
 
     'tasks': { # Async tasks available to the Task_Manager [celery] to schedule or run
-        
         'add': {        # Simple Addition Task (with default arguments) 
             'logic': lambda x,y: x + y,
             'schedule': None,
+            'timeframe': None,
             'args': (2,2)
         },
-
         'insert': {     # Periodic Database Insert Task 
             'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
             'schedule': {}, # Default - every minute
-            'depends_on': 'add', # Return value substituted for `res`,
-            'store_results': 'latest' # Cache latest
+            'timeframe': None,
+            'depends_on': 'add' # Return value substituted for `res`
         },
-
         'call_api': {   # API Call Task
-            'logic': lambda url, params=None: API.get_json(url, params),
+            'logic': lambda url, params=None: str(API.get(url, params, ignore_errors=False, retry_ms=10000, num_retries=20).content),
         },
-
-        'rand_add': {   # Simple Addition Task (with random arguments) 
-            'logic': lambda: randint(0, 1000) + randint(1, 10000),
-            'schedule': {},  # Default - every minute
-            'store_results': 'all' # Store all
-        },
+        'scheduled_call': {
+            'logic': lambda: Task_Manager.parallelize(
+                [['call_api', [x]] for x in get_websites(3)],
+            ),
+            'schedule': {}
+        }
     }
 }
-
-# Required boilerplate to run the app or the scheduler [RabbitMQ must be running]
-
-# Command line:
-# Celery | celery -A <path.to.app> worker -l info
-# App    | python3 <app.py>
 
 app = Application(sample_config)
 if __name__ == '__main__':
