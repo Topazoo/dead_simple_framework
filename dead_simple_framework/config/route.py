@@ -10,6 +10,7 @@ class Route(Config):
     ''' Used to specify a route in the config dictionary '''
 
     SUPPORTED_HTTP_METHODS = ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS']
+    CONFIG_TYPE = 'url'
 
     def __init__(self, url:str, name:str=None, methods:list=['GET'], defaults:dict=None, logic:Callable=None, collection:str=None):
         ''' Initialize a new route to add to the route config 
