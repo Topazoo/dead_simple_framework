@@ -55,6 +55,9 @@ sample_config = {
             'defaults': None,
             'logic': lambda: str(Task_Manager.run_task('add'))
         },
+        '/insert2': {
+            'logic': lambda: str(Task_Manager.run_task('insert'))
+        }
     },
 
 
@@ -62,13 +65,11 @@ sample_config = {
         'add': {        # Simple Addition Task (with default arguments) 
             'logic': lambda x,y: x + y,
             'schedule': None,
-            'timeframe': None,
-            'args': (2,2)
+            'default_args': (2,2)
         },
         'insert': {     # Periodic Database Insert Task 
-            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
+            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}).inserted_id,
             'schedule': {}, # Default - every minute
-            'timeframe': None,
             'depends_on': 'add' # Return value substituted for `res`
         },
         'call_api': {   # API Call Task

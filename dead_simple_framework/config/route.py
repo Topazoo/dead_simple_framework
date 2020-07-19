@@ -1,6 +1,5 @@
 
 # Interface class
-from dead_simple_framework import database
 from .config import Config
 
 # Typing
@@ -17,15 +16,21 @@ class Route(Config):
         ''' Initialize a new route to add to the route config 
         
         Args:
+        
             url (str): The url for this route
+
             methods (list): The supported methods for this route (must be included in `SUPPORTED_HTTP_METHODS`).
                 Defaults to ['GET']
+
             defaults (dict, optional): Optional defaults for request body or query string parameters for this route
+            
             logic (Callable, optional): Optional function to run when a request is made to this route.
                 receives the query string or body params with any defaults if they were passed
+            
             collection (str, optional): Optional MongoDB collection to use for automatic storage and retrieval
                 of data when a request is sent to the route. This allows automatic CRUD operations with no additional
                 config. See the documentation for the internal API for more info (TODO)
+            
             database (str, optional): Optional MongoDB database to use for automatic storage and retrieval
                 of data when a request is sent to the route. This allows automatic CRUD operations with no additional
                 config. If this is not set the default database is used. See the documentation for the internal API for more info (TODO)
