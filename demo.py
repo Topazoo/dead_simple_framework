@@ -55,11 +55,7 @@ sample_config = {
             'defaults': None,
             'logic': lambda: str(Task_Manager.run_task('add'))
         },
-        '/insert2': {
-            'logic': lambda: str(Task_Manager.run_task('insert'))
-        }
     },
-
 
     'tasks': { # Async tasks available to the Task_Manager [celery] to schedule or run
         'add': {        # Simple Addition Task (with default arguments) 
@@ -68,7 +64,7 @@ sample_config = {
             'default_args': (2,2)
         },
         'insert': {     # Periodic Database Insert Task 
-            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}).inserted_id,
+            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
             'schedule': {}, # Default - every minute
             'depends_on': 'add' # Return value substituted for `res`
         },
