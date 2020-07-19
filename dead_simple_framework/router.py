@@ -1,11 +1,11 @@
 # Flask
-from flask import Blueprint, render_template
+from flask import Blueprint
 
 # Internal API 
 from .api import API
 
 # Route config class
-from .config.route import Route
+from .config import Route
 
 # Encoding
 import json

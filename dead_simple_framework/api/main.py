@@ -11,7 +11,7 @@ from .utils import *
 from ..database import Database
 
 # Route object
-from ..config.route import Route
+from ..config import Route
 
 # Encoding
 import json
