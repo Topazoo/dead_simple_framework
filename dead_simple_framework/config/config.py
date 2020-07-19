@@ -25,7 +25,7 @@ class Config():
                 assert len(args) == 2, f"{cls.__name__}.from_dict() only passed [{len(args)}] arguments but 2 are required (name and config)"
                 # Check types
                 config = args[1]; types = cls.__init__.__annotations__
-                for key in config: assert isinstance(config[key], types[key]), \
+                for key in config: assert isinstance(config[key], types[key]) or not config[key], \
                     f"{cls.__name__}.from_dict() for url [{args[0]}] was passed an invalid type. Key [{key}] must have a type of {types[key]} but is {type(config[key])}"
 
                 return func(cls, args[0], args[1])

@@ -25,7 +25,6 @@ sample_config = {
         '/insert': { # Another route with automatic CRUD support
             'name': 'insert',
             'methods': ['GET', 'POST', 'DELETE', 'PUT'],
-            'template': None,
             'defaults': None,
             'logic': None,
             'collection': 'demo'
@@ -33,7 +32,6 @@ sample_config = {
         '/demo': { # Another route with automatic CRUD support
             'name': 'demo',
             'methods': ['GET', 'POST', 'DELETE', 'PUT'],
-            'template': None,
             'defaults': None,
             'logic': None,
             'collection': 'demo'
@@ -41,21 +39,18 @@ sample_config = {
         '/api/refresh': {  # Route that runs an async task (API call)
             'name': 'call',
             'methods': ['GET'],
-            'template': None,
             'defaults': None,
             'logic': lambda: str(Task_Manager.run_task('scheduled_call')),
         },
         '/': {  # Route that fetches the last result of an async task (API call)
             'name': 'call_cached',
             'methods': ['GET'],
-            'template': None,
             'defaults': None,
             'logic': lambda: str(Task_Manager.get_result('scheduled_call'))
         },
         '/add': {  # Route that fetches the last result of an async task (API call)
             'name': 'add',
             'methods': ['GET'],
-            'template': None,
             'defaults': None,
             'logic': lambda: str(Task_Manager.run_task('add'))
         },
