@@ -47,7 +47,7 @@ class Task_Manager(Celery):
     '''
 
     _app = None                                    # Internal application reference
-    _internal_tasks:Dict[str, TaskConfig] = {}     # Internal reference to all dynamically registered tasks [TODO - Class rather than dictionary]
+    _internal_tasks:Dict[str, TaskConfig] = {}     # Internal reference to all dynamically registered tasks
    
     _results_collection = Database_Task._collection     # Collection for task results
     _results_cache_key  = Database_Task._cache_key      # Cache key for latest task result ID storage
@@ -126,11 +126,7 @@ class Task_Manager(Celery):
         ''' Register a chain of tasks as a single task. Allows top-level tasks to be called that depend on the results of sub-tasks '''
 
         # Create a new task that invokes the chain of tasks when executed
-        chain_as_task = TaskConfig(
-            name=task.name + '_chain',
-            logic=lambda x=None: self.chain(task.name, task.default_args or [], task.default_kwargs or {})
-        )
-
+        chain_as_task = TaskConfig(name=task.name + '_chain', logic=lambda x=None: self.chain(task.name, task.default_args or [], task.default_kwargs or {}))
         chain_as_task.set_task(self.task(chain_as_task.logic, name=chain_as_task.name, result_serializer='pickle', base=self.get_task_type(task.depends_on), ignore_result=False))
         
         # Store an internal reference to the task chain's top-level task
@@ -242,8 +238,17 @@ class Task_Manager(Celery):
 
 
     @classmethod 
-    def get_result(cls, task_name):
-        ''' Get the latest result of a task if it exists '''
+    def get_result(cls, task_name:str):
+        ''' Get the latest result of a task if it exists
+        
+        Args:
+
+            task_name (str): The name of the task to retrieve the last result for
+
+        Returns:
+
+           The last stored result for the task
+        '''
 
         # Get the database record ID of the task result from the cache
         result_id = Cache().get_dynamic_dict_value(cls._results_cache_key, task_name)
@@ -254,8 +259,17 @@ class Task_Manager(Celery):
 
 
     @classmethod 
-    def get_results(cls, task_name):
-        ''' Get all stored results for a task '''
+    def get_results(cls, task_name:str):
+        ''' Get all stored results for a task 
+        
+        Args:
+
+            task_name (str): The name of the task to retrieve results for
+
+        Returns:
+
+            All stored results for the task. Only the latest result will be retuned if the task a `Store_Latest_Task` task
+        '''
 
         with Database(collection=cls._results_collection) as db:
             return [res['task_result'] for res in list(db.find({'task_name': task_name}))]
@@ -280,13 +294,19 @@ class Task_Manager(Celery):
         return task_config if isinstance(task_config, TaskConfig) else TaskConfig.from_dict(name, task_config)
 
 
-    def get_task_type(self, should_store:bool):
+    def get_task_type(self, should_store:bool) -> Task:
         ''' Get the type of task to use (different task types store results in different ways)
 
-            The type is based on the `store_results` key, if it is present, possible values:
-              - None     | Store the last result in the database [default]
-              - True     | Store all results in the database
-              - False    | Store no results in the database
+        Args:
+
+            should_store (bool): Whether or not results should be stored. The type is based on the `store_results` key, if it is present, possible values:
+                - None     | Store the last result in the database [default]
+                - True     | Store all results in the database
+                - False    | Store no results in the database
+
+        Returns:
+
+            The celery task type that should be used to instantiate a given task with based on it's `should_store` attribute
         '''
 
         if should_store: 
