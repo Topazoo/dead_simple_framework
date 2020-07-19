@@ -10,11 +10,17 @@ from .utils import *
 # Database
 from ..database import Database
 
+# Route object
+from ..config import Route
+
 # Encoding
 import json
 
 # Utilities
 import os
+
+# Typing
+from typing import Dict
 
 # TODO - [Useability]    | Authentication request/verification
 # TODO - [Extendability] | Get debug settings from main app config, fallback on env
@@ -22,7 +28,7 @@ import os
 class API:
     ''' Internal HTTP requests handler for Flask routes '''
 
-    ROUTES = {}
+    ROUTES:Dict[str, Route] = {}
 
     @classmethod
     def HANDLER(cls):  # Supported auto-handling for routes
@@ -179,12 +185,12 @@ class API:
 
 
     @classmethod
-    def _check_method(cls, url:str, method:str, route_config:dict):
+    def _check_method(cls, method:str, route:Route):
         ''' Ensure the method is allowed for a route or raise a 405 error '''
 
         # If the method isn't listed in the route conig the user passed it isn't allowed
-        if method not in route_config['methods']:
-            raise API_Error(f'Method [{method}] not allowed for route [{url}]', 405)
+        if method not in route.methods:
+            raise API_Error(f'Method [{method}] not allowed for route [{route.url}]', 405)
 
         # If the method doesn't have a handler assigned it isn't allowed
         if method not in cls.HANDLER():
@@ -202,19 +208,19 @@ class API:
         '''
 
         # Get the configuration for the route that was accessed
-        route_config = cls.ROUTES[str(request.url_rule)]
+        route = cls.ROUTES[str(request.url_rule)]
 
         # Ensure the method is allowed
-        cls._check_method(str(request.url_rule), request.method, route_config)
+        cls._check_method(request.method, route)
 
-        # Get the database/collection
-        database, collection = route_config.get('database'), route_config.get('collection')
+        # Get the collection
+        database, collection = route.database, route.collection
         
         # Run CRUD handling
-        data = cls.HANDLER()[request.method](request, database, collection)
+        data = cls.HANDLER()[request.method](request, database=database, collection=collection)
 
         # Get the logic that should be run for this route (if any)
-        delegate = route_config.get('logic')
+        delegate = route.logic
 
         # Run it, or return the data for the CRUD operation run
         return data if not delegate else delegate(request, data)

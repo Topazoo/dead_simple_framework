@@ -12,7 +12,7 @@ setuptools.setup(
     name='dead_simple_framework',
     license="MIT",
     description='Specify APIs with a Python dict and run with one line',
-    version='v0.3.3',
+    version='v0.3.4',
     long_description=README,
     url='https://github.com/Topazoo/dead_simple_framework',
     packages=setuptools.find_packages(),

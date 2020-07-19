@@ -23,11 +23,12 @@ class API:
 
         # Format the URL
         url = f"{url}{create_query_string(query_params)}".strip()
-
+        result = None
+        
         # Open a session
         with requests.Session() as session:
             # Try the request up to `num_retries` times
-            for x in range(0, num_retries):
+            for _ in range(0, num_retries):
                 result = session.send(session.prepare_request(requests.Request(method, url, headers=cls.HEADERS)))
                 if result.status_code == 400: # Fetch again on 400's
                     result = session.send(session.prepare_request(requests.Request(method, url, headers=cls.HEADERS)))
@@ -46,7 +47,7 @@ class API:
                 # Otherwise wait, then rety
                 sleep(retry_ms/1000)
         
-        return result if result.text else None
+        return result if result and result.text else None
 
 
     @classmethod
