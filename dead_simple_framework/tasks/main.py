@@ -124,19 +124,13 @@ class Task_Manager(Celery):
 
     def register_task_chain(self, task:TaskConfig):
         ''' Register a chain of tasks as a single task. Allows top-level tasks to be called that depend on the results of sub-tasks '''
-       
-        _task_name = task.name
-        chain_as_task = TaskConfig(
-            name=task.name + '_chain',
-            logic=lambda x=None: self.chain(_task_name, task.default_args or [], task.default_kwargs or {})
-        )
-
-        # Create a new function that creates the task chain when called
-        
-        # Add a unique suffix for the function and chained task
-        ###task.name += '_chain'; t.__name__ = task.name
 
         # Create a new task that invokes the chain of tasks when executed
+        chain_as_task = TaskConfig(
+            name=task.name + '_chain',
+            logic=lambda x=None: self.chain(task.name, task.default_args or [], task.default_kwargs or {})
+        )
+
         chain_as_task.set_task(self.task(chain_as_task.logic, name=chain_as_task.name, result_serializer='pickle', base=self.get_task_type(task.depends_on), ignore_result=False))
         
         # Store an internal reference to the task chain's top-level task

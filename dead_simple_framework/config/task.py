@@ -2,14 +2,8 @@
 # Interface class
 from .config import Config
 
-# Custom Task classes 
-#from ..tasks.task import Database_Task, Store_Task, Store_Latest_Task
-
 # Typing
 from typing import Callable
-
-# Celery
-from celery import Task
 
 
 class TaskConfig(Config):
@@ -54,5 +48,7 @@ class TaskConfig(Config):
 
     def set_task(self, task):
         ''' Set the actual Celery task for this class '''
+
+        assert not self.task, f"Task.set_task() error for task [{self.name}] | A Celery task is already set!"
 
         self.task = task
