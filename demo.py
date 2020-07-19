@@ -1,4 +1,4 @@
-from dead_simple_framework import Application, Task_Manager, Database, API
+from dead_simple_framework import Application, Task_Manager, Database, API, Route, Task
 from random import choice
 
 WEBSITES =[
@@ -22,15 +22,12 @@ def get_websites(n):
 
 sample_config = {
     'routes': {
-        '/insert': { # Another route with automatic CRUD support
-            'name': 'insert',
-            'methods': ['GET', 'POST', 'DELETE', 'PUT'],
-            'defaults': None,
-            'logic': None,
-            'collection': 'demo',
-            'database': 'demo'
-        },
-        '/demo': { # Another route with automatic CRUD support
+        'insert': Route( # A route with automatic CRUD support
+            url='/insert',
+            methods=['GET', 'POST', 'DELETE', 'PUT'],
+            collection='insert',
+        ),
+        'demo': { # Another route with automatic CRUD support
             'name': 'demo',
             'methods': ['GET', 'POST', 'DELETE', 'PUT'],
             'defaults': None,
@@ -71,12 +68,11 @@ sample_config = {
         'call_api': {   # API Call Task
             'logic': lambda url, params=None: str(API.get(url, params, ignore_errors=False, retry_ms=10000, num_retries=20).content),
         },
-        'scheduled_call': {
-            'logic': lambda: Task_Manager.parallelize(
-                [['call_api', [x]] for x in get_websites(3)],
-            ),
-            'schedule': {}
-        }
+        'scheduled_call': Task(
+            name='scheduled_call',
+            logic=lambda: Task_Manager.parallelize([['call_api', [x]] for x in get_websites(3)]),
+            schedule={}
+        )
     }
 }
 

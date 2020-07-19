@@ -52,7 +52,7 @@ class Router:
             # Register the blueprint with the Flask app so HTTP requests can be directed to it's URL
             app.register_blueprint(blueprint)
             # Add the Route object to the internal registry
-            route_objs[route_url] = route
+            route_objs[route.url] = route
 
         API.ROUTES = route_objs # Copy routes to the internal API cass it can reference them
 
