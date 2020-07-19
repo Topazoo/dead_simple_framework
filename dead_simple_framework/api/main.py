@@ -214,11 +214,10 @@ class API:
         cls._check_method(request.method, route)
 
         # Get the collection
-        # TODO - ADD support for `database` argument
-        collection = route.collection
+        database, collection = route.database, route.collection
         
         # Run CRUD handling
-        data = cls.HANDLER()[request.method](request, collection=collection)
+        data = cls.HANDLER()[request.method](request, database=database, collection=collection)
 
         # Get the logic that should be run for this route (if any)
         delegate = route.logic

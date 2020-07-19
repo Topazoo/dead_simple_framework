@@ -27,7 +27,8 @@ sample_config = {
             'methods': ['GET', 'POST', 'DELETE', 'PUT'],
             'defaults': None,
             'logic': None,
-            'collection': 'demo'
+            'collection': 'demo',
+            'database': 'demo'
         },
         '/demo': { # Another route with automatic CRUD support
             'name': 'demo',

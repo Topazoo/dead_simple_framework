@@ -1,5 +1,6 @@
 
 # Interface class
+from dead_simple_framework import database
 from .config import Config
 
 # Typing
@@ -12,7 +13,7 @@ class Route(Config):
     SUPPORTED_HTTP_METHODS = ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS']
     CONFIG_TYPE = 'url'
 
-    def __init__(self, url:str, name:str=None, methods:list=['GET'], defaults:dict=None, logic:Callable=None, collection:str=None):
+    def __init__(self, url:str, name:str=None, methods:list=['GET'], defaults:dict=None, logic:Callable=None, collection:str=None, database:str=None):
         ''' Initialize a new route to add to the route config 
         
         Args:
@@ -25,6 +26,9 @@ class Route(Config):
             collection (str, optional): Optional MongoDB collection to use for automatic storage and retrieval
                 of data when a request is sent to the route. This allows automatic CRUD operations with no additional
                 config. See the documentation for the internal API for more info (TODO)
+            database (str, optional): Optional MongoDB database to use for automatic storage and retrieval
+                of data when a request is sent to the route. This allows automatic CRUD operations with no additional
+                config. If this is not set the default database is used. See the documentation for the internal API for more info (TODO)
         '''
 
         self.url = Config.normalize_url(url)
@@ -33,6 +37,7 @@ class Route(Config):
         self.defaults = defaults
         self.logic = logic
         self.collection = collection
+        self.database = database
 
 
     def _validate_methods(self, methods:list):
