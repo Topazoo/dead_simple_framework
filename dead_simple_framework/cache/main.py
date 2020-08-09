@@ -1,6 +1,9 @@
 # Redis
 import redis
 
+# Redis Settings
+
+
 # Redis Errors
 from redis.exceptions import ResponseError, DataError
 

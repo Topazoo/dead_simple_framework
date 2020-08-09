@@ -11,6 +11,9 @@ from .encoder import JSON_Encoder
 # Async Tasks
 from .tasks import Task_Manager
 
+# App-wide settings
+from .config.settings.main import Settings
+
 # Utilities
 import os
 
@@ -32,14 +35,21 @@ class Application(Task_Manager):
 
     _app = None     # Internal reference - Hacky way to allow classmethods to access a global state (probably a bad idea)
 
-    def __init__(self, config:dict, debug=True):
-        ''' Initialize the server based on the configuration dictionary 
-        
+    def __init__(self, config:dict):
+        ''' Initialize the server based on the configuration dictionary '''
 
-        '''
+        Settings(**config.get('settings', { # TODO - Replace with empty dict (debug)
+            'app_settings': {
+                'app_env': 'dev',
+                'app_enable_cors': True
+            },
+        })) 
 
         # Create Flask application
         self.app = Flask(__name__)
+
+        # Log 3rd party configuration
+        Settings.log_config()
 
         # Register a custom encoder for JSON serialization
         # [Note] - This currently just bypasses errors by casting the offending data to a string :)
@@ -49,10 +59,9 @@ class Application(Task_Manager):
         Router.register_routes(self.app, config['routes'])
         
         # Initialize inherited asynchronous task management ability
-        super().__init__(dynamic_tasks=config['tasks'])
+        super().__init__(dynamic_tasks=config.get('tasks'))
 
-        # TODO - [Stability] | Allow this to be set in the main application configuration
-        if debug: CORS(self.app)
+        if Settings.APP_ENABLE_CORS: CORS(self.app)
 
         Application._app = self
 
@@ -60,4 +69,8 @@ class Application(Task_Manager):
     def run(self):
         ''' Runs the server '''
 
-        self.app.run(host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'), debug=(os.environ.get('APP_DEBUG') == 'True'))
+        #self.app.run(host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'), debug=(os.environ.get('APP_DEBUG') == 'True'))
+        self.app.run(
+            host=Settings.APP_HOST, 
+            debug=Settings.APP_DEBUG_MODE
+        )
