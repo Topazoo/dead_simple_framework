@@ -7,8 +7,8 @@ from .errors import API_Error
 # API Utilities
 from .utils import *
 
-# Database
-from ..database import Database
+# App Settings
+from dead_simple_framework.config import App_Settings
 
 # Route object
 from ..config import Route
@@ -23,7 +23,6 @@ import os
 from typing import Dict
 
 # TODO - [Useability]    | Authentication request/verification
-# TODO - [Extendability] | Get debug settings from main app config, fallback on env
 
 class API:
     ''' Internal HTTP requests handler for Flask routes '''
@@ -74,7 +73,7 @@ class API:
             return JsonResponse({'data': sorted_data}, 200 if len(sorted_data) > 0 else 404)
             
         except Exception as e:
-            if os.environ.get('APP_ENV') == 'development':
+            if App_Settings.APP_ENV == 'development':
                 raise e
 
             return JsonError('GET', e)
@@ -105,7 +104,7 @@ class API:
             return JsonResponse({'_id': str(inserted_id)}, code=200)
 
         except Exception as e:
-            if os.environ.get('APP_ENV') == 'development':
+            if App_Settings.APP_ENV == 'development':
                 raise e
 
             return JsonError('POST', e)
@@ -143,7 +142,7 @@ class API:
             return JsonResponse(code=200)
 
         except Exception as e:
-            if os.environ.get('APP_ENV') == 'development':
+            if App_Settings.APP_ENV == 'development':
                 raise e
 
             return JsonError('PUT', e)
@@ -178,7 +177,7 @@ class API:
             return JsonResponse(code=200)
 
         except Exception as e:
-            if os.environ.get('APP_ENV') == 'development':
+            if App_Settings.APP_ENV == 'development':
                 raise e
 
             return JsonError('DELETE', e)
