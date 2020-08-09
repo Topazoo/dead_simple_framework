@@ -68,7 +68,7 @@ sample_config = {
         'call_api': {   # API Call Task
             'logic': lambda url, params=None: str(API.get(url, params, ignore_errors=False, retry_ms=10000, num_retries=20).content),
         },
-        'scheduled_call': Task(
+        'scheduled_call': Task( # Make 3 parallel API calls
             name='scheduled_call',
             logic=lambda: Task_Manager.parallelize([['call_api', [x]] for x in get_websites(3)]),
             schedule={}
