@@ -9,6 +9,9 @@ from kombu.serialization import register
 # Task config class
 from ..config import TaskConfig
 
+# Task Settings
+from ..config import Redis_Settings, RabbitMQ_Settings
+
 # Custom Tasks
 from .task import Database_Task, Store_Task, Store_Latest_Task
 
@@ -35,7 +38,6 @@ import logging
 # TODO - [Stability]     | Timeouts for all tasks (especially sync tasks)
 # TODO - [Useability]    | Retreival method for failed tasks
 # TODO - [Useability]    | Use `Celery` via adapter to hide unwanted methods/attributes
-# TODO - [Extendability] | Allow ampq/results backend/celery config to be set in app config, use env as a redundancy
 
 
 class Task_Manager(Celery):
@@ -52,30 +54,9 @@ class Task_Manager(Celery):
     _results_collection = Database_Task._collection     # Collection for task results
     _results_cache_key  = Database_Task._cache_key      # Cache key for latest task result ID storage
 
-    def _get_ampq_host(self):
-        ''' Connection string for RabbitMQ broker '''
-
-        # Check the environment for a custom config, then default to localhost
-        host = os.environ.get('RABBITMQ_HOST', 'localhost')
-        port = os.environ.get('RABBITMQ_PORT', '5672')
-        username = os.environ.get('RABBITMQ_USERNAME', 'guest')
-        password = os.environ.get('RABBITMQ_PASSWORD', 'guest')
-
-        return f"amqp://{username}:{password}@{host}:{port}/"
-
-    def _get_redis_host(self):
-        ''' Connection string for Redis results backend '''
-
-        host=os.environ.get('REDIS_HOST', 'localhost')
-        port=os.environ.get('REDIS_PORT', '6379')
-        db = os.environ.get('REDIS_DB', '0')
-
-        return f'redis://{host}:{port}/{db}'
-
-
     def __init__(self, dynamic_tasks:dict=None, main=None, loader=None, backend=None, amqp=None, events=None, log=None, control=None, set_as_current=True, tasks=None, broker=None, include=None, changes=None, config_source=None, fixups=None, task_cls=None, autofinalize=True, namespace=None, strict_typing=True, result_persistent = False, ignore_result=False, **kwargs):
         # Attach to RabbitMQ to allow tasks to be sent to/processed by any available worker
-        broker, backend = self._get_ampq_host(), self._get_redis_host()
+        broker, backend = RabbitMQ_Settings.RABBITMQ_CONNECTION_STRING, Redis_Settings.REDIS_CONNECTION_STRING
         
         # Override path to tasks to simplify invoking Celery from the command line
         super().__init__(main='dead_simple_framework', loader=loader, backend=backend, amqp=amqp, events=events, log=log, control=control, set_as_current=set_as_current, tasks=tasks, broker=broker, include=include, changes=changes, config_source=config_source, fixups=fixups, task_cls=task_cls, autofinalize=autofinalize, namespace=namespace, strict_typing=strict_typing, **kwargs)

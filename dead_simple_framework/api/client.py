@@ -4,6 +4,9 @@ import requests
 # API Utilities
 from .utils import create_query_string
 
+# App Settings
+from dead_simple_framework.config import App_Settings
+
 # API Errors
 from .errors import API_Client_Error
 
@@ -14,8 +17,6 @@ from time import sleep
 
 class API:
     ''' Client for making HTTP requests  '''
-
-    HEADERS = {"User-Agent": "Mozilla/5.0"}
 
     @classmethod
     def send_request(cls, method:str, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
@@ -29,9 +30,9 @@ class API:
         with requests.Session() as session:
             # Try the request up to `num_retries` times
             for _ in range(0, num_retries):
-                result = session.send(session.prepare_request(requests.Request(method, url, headers=cls.HEADERS)))
+                result = session.send(session.prepare_request(requests.Request(method, url, headers=App_Settings.APP_API_CLIENT_HEADERS)))
                 if result.status_code == 400: # Fetch again on 400's
-                    result = session.send(session.prepare_request(requests.Request(method, url, headers=cls.HEADERS)))
+                    result = session.send(session.prepare_request(requests.Request(method, url, headers=App_Settings.APP_API_CLIENT_HEADERS)))
 
                 # If there is a result
                 if result:

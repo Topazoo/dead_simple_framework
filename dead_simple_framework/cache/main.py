@@ -2,7 +2,7 @@
 import redis
 
 # Redis Settings
-
+from ..config import Redis_Settings
 
 # Redis Errors
 from redis.exceptions import ResponseError, DataError
@@ -20,17 +20,14 @@ from typing import Union
 # TODO - [Stability]     | Dummy cache if Redis not running
 # TODO - [Stability]     | Timeouts + Automatic retries
 # TODO - [Useability]    | Allow serialization/deserialization and storage of typed data
-# TODO - [Useability]    | Allow serialization/deserialization and storage of typed data
 # TODO - [Useability]    | Support for lists (queues)
-# TODO - [Extendability] | Redis host string and other config (dump to disk settings) from main app config, env as fallback
-
 
 class Cache:
     ''' Client for caching task results or database queries '''
 
     def __init__(self):
         # Connect to Redis
-        self._redis = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=os.environ.get('REDIS_PORT', 6379), db=0)
+        self._redis = redis.Redis(host=Redis_Settings.REDIS_HOST, port=Redis_Settings.REDIS_PORT, db=Redis_Settings.REDIS_DB)
 
 
     def cache_string(self, key:str, value:str):

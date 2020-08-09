@@ -1,7 +1,9 @@
 # Interface class
 from .setting import Setting
+from .redis_settings import Redis_Settings
 # Utilities
 import os, kombu, socket, time
+from celery import Celery
 
 class RabbitMQ_Settings(Setting):
     ''' Used to specify and validate RabbitMQ settings '''
@@ -43,16 +45,23 @@ class RabbitMQ_Settings(Setting):
             os.system(RabbitMQ_Settings.RABBITMQ_INSTALLATION_PATH + ' -detached'); time.sleep(4)
             print('Done :)')
 
+
     @staticmethod
     def get_log_data():
         ''' Returns a list of the settings to log to console '''
 
         rabbitmq_online = RabbitMQ_Settings.check_rabbitmq_connection()
-        if RabbitMQ_Settings.USE_TASKS: conn_test = 'Connected to RabbitMQ :)' if rabbitmq_online else 'WARNING - RabbitMQ ping failed. Ensure the service is running and config is correct. Defaulting to mutliprocess task engine'
-        else: conn_test = 'RabbitMQ is disabled via config, defaulting to multiprocess task engine'
+        if RabbitMQ_Settings.USE_TASKS: rabbit_conn_test = 'Connected to RabbitMQ :)' if rabbitmq_online else 'WARNING - RabbitMQ ping failed. Ensure the service is running and config is correct. Defaulting to mutliprocess task engine'
+        else: rabbit_conn_test = 'RabbitMQ is disabled via config, defaulting to multiprocess task engine'
+       
+        #celery_online = RabbitMQ_Settings.check_rabbitmq_connection()
+        #if RabbitMQ_Settings.USE_TASKS: celery_conn_test = 'Connected to Celery :)' if celery_online else 'WARNING - Celery ping failed. Ensure the service is running and config is correct. Defaulting to mutliprocess task engine'
+        #else: celery_conn_test = 'Celery is disabled via config, defaulting to multiprocess task engine'
+
         return [
             f'RabbitMQ connection string set to [{RabbitMQ_Settings.RABBITMQ_CONNECTION_STRING}]',
-            conn_test
+            rabbit_conn_test,
+            #celery_conn_test
         ]
 
     @staticmethod
