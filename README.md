@@ -26,12 +26,12 @@ $ pip install dead-simple-framework
 
 ## Configuration:
 
-TODO
+TODO - DOCS
 
 ## Example Application (`demo.py`):
 
+\* Celery must be running *
 ```sh
-$ rabbitmq-server
 $ celery -A demo worker -l info
 ```
 
