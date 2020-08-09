@@ -38,12 +38,7 @@ class Application(Task_Manager):
     def __init__(self, config:dict):
         ''' Initialize the server based on the configuration dictionary '''
 
-        Settings(**config.get('settings', { # TODO - Replace with empty dict (debug)
-            'app_settings': {
-                'app_env': 'dev',
-                'app_enable_cors': True
-            },
-        })) 
+        Settings(**config.get('settings', {})) 
 
         # Create Flask application
         self.app = Flask(__name__)
