@@ -13,14 +13,8 @@ from dead_simple_framework.config import App_Settings
 # Route object
 from ..config import Route
 
-# Encoding
-import json
-
-# Utilities
-import os
-
 # Typing
-from typing import Dict
+from typing import Callable, Dict
 
 # TODO - [Useability]    | Authentication request/verification
 
@@ -195,6 +189,18 @@ class API:
         if method not in cls.HANDLER():
             raise API_Error(f'No hanlder for [{method}]', 405)
 
+    
+    @classmethod
+    def _check_logic(cls, route_name:str, logic_func:Callable, collection:str):
+        ''' Ensure user defined logic '''
+
+        num_parameters = len(logic_func.__code__.co_varnames)
+
+        if collection and num_parameters < 3:
+            raise API_Error(f'Handler [{logic_func.__name__}] for route [{route_name}] supports [{num_parameters}] arguments. Must support 3 (request, payload, collection)', 500)
+        elif num_parameters < 2:
+            raise API_Error(f'Handler [{logic_func.__name__}] for route [{route_name}] supports [{num_parameters}] arguments. Must support 2 (request, payload)', 500)
+        
 
     @classmethod
     def main(cls) -> Response:
@@ -214,12 +220,26 @@ class API:
 
         # Get the collection
         database, collection = route.database, route.collection
-        
-        # Run CRUD handling
-        data = cls.HANDLER()[request.method](request, database=database, collection=collection)
 
         # Get the logic that should be run for this route (if any)
-        delegate = route.logic
+        logic = route.logic
+        
+        if not logic: # Use default handling if no logic provided
+            # Run CRUD handling
+            return cls.HANDLER()[request.method](request, database=database, collection=collection)
 
-        # Run it, or return the data for the CRUD operation run
-        return data if not delegate else delegate(request, data)
+        if str(request.method) == 'GET':
+            payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
+        else:
+            payload = request.get_json(force=True) if request.data else {}
+
+        # Ensure user defined logic can accept arguments to pass or throw a warning
+        cls._check_logic(route.name, logic, collection)
+
+        # If a collection is specified, pass through to next function
+        if route.collection or route.database:
+            with Database(database=route.database, collection=route.collection) as collection:
+                return logic(request, payload, collection)
+        
+        # Otherwise just pass the request
+        return logic(request, payload)

@@ -63,8 +63,5 @@ class Router:
         # Ensure logic or a collection is set
         assert route.collection or route.logic, f"No collection or logic specified for route {route.url}. This route will do nothing!"
 
-        # Set the handler that should fire when this URL is hit
-        view_func = API.main if route.collection else route.logic
-
         # Set the blueprint to the URL specified in the route configuration
-        blueprint.add_url_rule(route.url, route.name, view_func=view_func, methods=route.methods, **({'defaults': route.defaults} if route.defaults else {}))
+        blueprint.add_url_rule(route.url, route.name, view_func=API.main, methods=route.methods, **({'defaults': route.defaults} if route.defaults else {}))

@@ -35,6 +35,6 @@ class App_Settings(Setting):
         ''' Returns a list of the settings to log to console '''
 
         return [
-            'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application'
+            'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application',
             f'Default API client headers are {App_Settings.APP_API_CLIENT_HEADERS}'
         ]
