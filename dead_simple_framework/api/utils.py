@@ -86,9 +86,11 @@ def parse_query_string(payload: str) -> dict:
         args = param.split('=')
         if args[0] == 'filter':
             dict_payload[args[0]] = parse_query_pairs(args[1])
-        if args[0] == 'sort':
+        elif args[0] == 'sort':
             dict_payload[args[0]] = parse_query_params(args[1])
-
+        else:
+            dict_payload[args[0]] = args[1]
+        
     return dict_payload
 
 
