@@ -38,19 +38,19 @@ sample_config = {
             'name': 'call',
             'methods': ['GET'],
             'defaults': None,
-            'logic': lambda: str(Task_Manager.run_task('scheduled_call')),
+            'logic': lambda x,y: str(Task_Manager.run_task('scheduled_call')),
         },
         '/': {  # Route that fetches the last result of an async task (API call)
             'name': 'call_cached',
             'methods': ['GET'],
             'defaults': None,
-            'logic': lambda: str(Task_Manager.get_result('scheduled_call'))
+            'logic': lambda x,y: str(Task_Manager.get_result('scheduled_call'))
         },
         '/add': {  # Route that fetches the last result of an async task (API call)
             'name': 'add',
             'methods': ['GET'],
             'defaults': None,
-            'logic': lambda: str(Task_Manager.run_task('add'))
+            'logic': lambda x,y: str(Task_Manager.run_task('add'))
         },
     },
 
