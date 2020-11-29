@@ -231,7 +231,7 @@ class API:
         if str(request.method) == 'GET':
             payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
         else:
-            payload = request.get_json(force=True) if request.data else {}
+            payload = request.get_json(force=True) if request.data else dict(request.form)
 
         # Ensure user defined logic can accept arguments to pass or throw a warning
         cls._check_logic(route.name, logic, collection)
