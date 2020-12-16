@@ -10,7 +10,7 @@ class MongoDB_Settings(Setting):
     CONFIG_TYPE = 'mongodb_settings'
 
     # MongoDB Config
-    MONGODB_URL = os.environ.get('MONGODB_URL', 'mongodb')
+    MONGODB_ATLAS = os.environ.get('MONGODB_ATLAS', False)
     MONGODB_HOST = os.environ.get('MONGODB_HOST', 'localhost')
     MONGODB_PORT = os.environ.get('MONGODB_PORT', 27017)
     MONGODB_USERNAME = os.environ.get('MONGODB_USERNAME', '')
@@ -23,12 +23,12 @@ class MongoDB_Settings(Setting):
     MONGODB_INSTALLATION_PATH = os.environ.get('RABBITMQ_INSTALLATION_PATH', '/usr/local/bin/mongod')
     FORCE_START_MONGODB = os.environ.get('FORCE_START_MONGODB', True)
 
-    def __init__(self, mongodb_url:str=None, mongodb_host:str=None, mongodb_port:str=None, mongodb_username:str=None,
+    def __init__(self, mongodb_atlas:bool=None, mongodb_host:str=None, mongodb_port:str=None, mongodb_username:str=None,
                     mongodb_password:str=None, mongodb_default_db:str=None, mongodb_default_collection:str=None,
                     mongodb_connection_string:str=None, mongodb_data_path:str=None, mongodb_log_path:str=None, 
                     force_start_mongodb:bool=None, mongodb_installation_path:str=None):
 
-        if mongodb_url: MongoDB_Settings.MONGODB_URL = mongodb_url
+        if mongodb_atlas: MongoDB_Settings.MONGODB_ATLAS = mongodb_atlas
         if mongodb_host: MongoDB_Settings.MONGODB_HOST = mongodb_host
         if mongodb_port: MongoDB_Settings.MONGODB_PORT = mongodb_port
         if mongodb_username: MongoDB_Settings.MONGODB_USERNAME = mongodb_username
@@ -43,8 +43,10 @@ class MongoDB_Settings(Setting):
             MongoDB_Settings.MONGODB_CONNECTION_STRING = mongodb_connection_string
         else:
             auth = f"{MongoDB_Settings.MONGODB_USERNAME}:{MongoDB_Settings.MONGODB_PASSWORD}@"
-            MongoDB_Settings.MONGODB_CONNECTION_STRING = f'{MongoDB_Settings.MONGODB_URL}://' + (auth + MongoDB_Settings.MONGODB_HOST if auth.strip() != ':@' else MongoDB_Settings.MONGODB_HOST)
-
+            if not MongoDB_Settings.MONGODB_ATLAS:
+                MongoDB_Settings.MONGODB_CONNECTION_STRING = f'mongodb://' + (auth + MongoDB_Settings.MONGODB_HOST if auth.strip() != ':@' else MongoDB_Settings.MONGODB_HOST)
+            else:
+                MongoDB_Settings.MONGODB_CONNECTION_STRING = f'mongodb+srv://' + (auth + MongoDB_Settings.MONGODB_HOST if auth.strip() != ':@' else MongoDB_Settings.MONGODB_HOST) + f'/{MongoDB_Settings.MONGODB_DEFAULT_DB}?retryWrites=true&w=majority'
         # Allow MongoDB to be force started
         MongoDB_Settings.check_mongodb_connection(MongoDB_Settings.FORCE_START_MONGODB)
             
@@ -53,8 +55,13 @@ class MongoDB_Settings(Setting):
         ''' Returns a list of the settings to log to console '''
 
         MongoDB_Settings.check_mongodb_connection()
+        if not MongoDB_Settings.MONGODB_ATLAS:
+            conn_str = f'MongoDB connection string set to [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT}]'
+        else:
+            conn_str = f'MongoDB connection string set to Atlas URL [{MongoDB_Settings.MONGODB_CONNECTION_STRING}'
+
         return [
-            f'MongoDB connection string set to [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT}]',
+            conn_str,
             f'MongoDB default database set to [{MongoDB_Settings.MONGODB_DEFAULT_DB}]',
             f'MongoDB default collection set to [{MongoDB_Settings.MONGODB_DEFAULT_COLLECTION}]',
             f'MongoDB data path set to [{MongoDB_Settings.MONGODB_DATA_PATH}]',
