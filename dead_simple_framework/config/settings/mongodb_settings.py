@@ -57,15 +57,19 @@ class MongoDB_Settings(Setting):
         MongoDB_Settings.check_mongodb_connection()
         if not MongoDB_Settings.MONGODB_ATLAS:
             conn_str = f'MongoDB connection string set to [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT}]'
+            log_data = [
+                f'MongoDB data path set to [{MongoDB_Settings.MONGODB_DATA_PATH}]',
+                f'MongoDB log path set to [{MongoDB_Settings.MONGODB_LOG_PATH}]',
+            ]
         else:
             conn_str = f'MongoDB connection string set to Atlas URL [{MongoDB_Settings.MONGODB_CONNECTION_STRING}'
+            log_data = []
 
         return [
             conn_str,
             f'MongoDB default database set to [{MongoDB_Settings.MONGODB_DEFAULT_DB}]',
             f'MongoDB default collection set to [{MongoDB_Settings.MONGODB_DEFAULT_COLLECTION}]',
-            f'MongoDB data path set to [{MongoDB_Settings.MONGODB_DATA_PATH}]',
-            f'MongoDB log path set to [{MongoDB_Settings.MONGODB_LOG_PATH}]',
+            *log_data,
             'Connected to MongoDB :)'
         ]
 
