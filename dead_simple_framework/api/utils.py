@@ -57,7 +57,7 @@ def parse_query_pairs(payload: str) -> dict:
 
     pairs = {}
     for pair_tuple in map(lambda pair: pair.split(':'), [pair for pair in payload.split(',')]):
-        pairs[pair_tuple[0]] = pair_tuple[1]
+        pairs[normalize_query_string(pair_tuple[0])] = normalize_query_string(pair_tuple[1])
 
     return pairs
 
@@ -70,7 +70,13 @@ def parse_query_params(payload: str) -> list:
         <-- The parsed values.
     '''
 
-    return [(value, 1) for value in payload.split(',')]
+    return [(normalize_query_string(value), 1) for value in payload.split(',')]
+
+
+def normalize_query_string(raw_value:str) -> str:
+    ''' Replace encoded keys and value characters in passed query params '''
+
+    return raw_value.replace('%20', ' ')
 
 
 def parse_query_string(payload: str) -> dict:
@@ -89,7 +95,7 @@ def parse_query_string(payload: str) -> dict:
         elif args[0] == 'sort':
             dict_payload[args[0]] = parse_query_params(args[1])
         else:
-            dict_payload[args[0]] = args[1]
+            dict_payload[args[0]] = normalize_query_string(args[1])
         
     return dict_payload
 
