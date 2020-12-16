@@ -80,9 +80,9 @@ class MongoDB_Settings(Setting):
                 return True if pymongo.MongoClient(MongoDB_Settings.MONGODB_CONNECTION_STRING, serverSelectionTimeoutMS=300).server_info() else False
         except:
             if not can_force_start or MongoDB_Settings.MONGODB_ATLAS:
-                raise Exception(f'ERROR - MongoDB ping failed for host [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT if MongoDB_Settings.MONGODB_ATLAS else ""}]. Ensure the service is running and config is correct')
+                raise Exception(f'ERROR - MongoDB ping failed for host [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT if not MongoDB_Settings.MONGODB_ATLAS else ""}]. Ensure the service is running and config is correct')
             
-            print(f'ERROR - MongoDB ping failed for host [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT if MongoDB_Settings.MONGODB_ATLAS else ""}]. Attempting to force start...')
+            print(f'ERROR - MongoDB ping failed for host [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT if not MongoDB_Settings.MONGODB_ATLAS else ""}]. Attempting to force start...')
 
             if not os.path.exists(f'{MongoDB_Settings.MONGODB_LOG_PATH}'): os.system(f'touch {MongoDB_Settings.MONGODB_LOG_PATH}')
             os.system(f'{MongoDB_Settings.MONGODB_INSTALLATION_PATH} --fork --logpath={MongoDB_Settings.MONGODB_LOG_PATH} --dbpath={MongoDB_Settings.MONGODB_DATA_PATH}')
