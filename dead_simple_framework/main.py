@@ -64,8 +64,4 @@ class Application(Task_Manager):
     def run(self):
         ''' Runs the server '''
 
-        #self.app.run(host=os.environ.get('FLASK_RUN_HOST', '0.0.0.0'), debug=(os.environ.get('APP_DEBUG') == 'True'))
-        self.app.run(
-            host=Settings.APP_HOST, 
-            debug=Settings.APP_DEBUG_MODE
-        )
+        self.app.run(host=Settings.APP_HOST, debug=Settings.APP_DEBUG_MODE, port=Settings.APP_PORT)
