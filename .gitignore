@@ -146,4 +146,6 @@ celerybeat-schedule
 # PyPi
 pypi/dead_simple_framework/
 pypi/README.md
+
+# Redis
 dump.rdb

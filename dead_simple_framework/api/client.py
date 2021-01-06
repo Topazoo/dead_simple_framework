@@ -13,13 +13,17 @@ from .errors import API_Client_Error
 # Utilities
 from time import sleep
 
+# Typing
+from requests.models import Response
+from typing import Union
+
 # TODO - [Stability]     | Timeouts
 
 class API:
     ''' Client for making HTTP requests  '''
 
     @classmethod
-    def send_request(cls, method:str, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
+    def send_request(cls, method:str, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Response:
         ''' Shared logic that handles actually firing a request '''
 
         # Format the URL
@@ -47,51 +51,54 @@ class API:
 
                 # Otherwise wait, then rety
                 sleep(retry_ms/1000)
-        
-        return result if result and result.text else None
+
+        return result if result != None and result.text != None else None
 
 
     @classmethod
-    def options(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
+    def options(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Response:
         ''' [HTTP OPTIONS] Send an options request '''
 
         return cls.send_request('OPTIONS', url, query_params=query_params, data=data, ignore_errors=ignore_errors, retry_ms=retry_ms, num_retries=num_retries)
 
 
     @classmethod
-    def post(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
+    def post(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Response:
         ''' [HTTP POST] Send data to an API'''
 
         return cls.send_request('POST', url, query_params=query_params, data=data, ignore_errors=ignore_errors, retry_ms=retry_ms, num_retries=num_retries)
 
 
     @classmethod
-    def put(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
+    def put(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Response:
         ''' [HTTP PUT] Replace data via API'''
 
         return cls.send_request('PUT', url, query_params=query_params, data=data, ignore_errors=ignore_errors, retry_ms=retry_ms, num_retries=num_retries)
 
 
     @classmethod
-    def patch(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
+    def patch(cls, url:str, query_params:dict=None, data:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Response:
         ''' [HTTP PATCH] Update data via API'''
 
         return cls.send_request('PATCH', url, query_params=query_params, data=data, ignore_errors=ignore_errors, retry_ms=retry_ms, num_retries=num_retries)
 
 
     @classmethod
-    def get(cls, url:str, query_params:dict=None, ignore_errors=False, retry_ms=500, num_retries=3):
+    def get(cls, url:str, query_params:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Response:
         ''' [HTTP GET] Fetch a resource from an API '''
 
         return cls.send_request('GET', url, query_params=query_params, ignore_errors=ignore_errors, retry_ms=retry_ms, num_retries=num_retries)
 
 
     @classmethod
-    def get_json(cls, url:str, query_params:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> dict:
+    def get_json(cls, url:str, query_params:dict=None, ignore_errors=False, retry_ms=500, num_retries=3) -> Union[dict, Response]:
         ''' [HTTP GET] Fetch a JSON from an API '''
 
         # Get the raw result
         res = cls.get(url, query_params, ignore_errors, retry_ms, num_retries)
 
         # Extract data into dictionary
-        return res.json() if res else {}
+        try:
+            return res.json() if res != None else {}
+        except Exception:
+            return res
