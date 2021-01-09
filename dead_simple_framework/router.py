@@ -2,7 +2,7 @@
 from flask import Blueprint
 
 # Internal API 
-from .api import API
+from .api import RouteHandler
 
 # Route config class
 from .config import Route
@@ -54,14 +54,11 @@ class Router:
             # Add the Route object to the internal registry
             route_objs[route.url] = route
 
-        API.ROUTES = route_objs # Copy routes to the internal API cass it can reference them
+        RouteHandler.ROUTES = route_objs # Copy routes to RouteHandler instances
 
     @staticmethod
     def configure_blueprint(route:Route, blueprint: Blueprint):
         ''' Adds configurations to the route Blueprint based on the dictionary specification '''
 
-        # Ensure logic or a collection is set
-        assert route.collection or route.logic, f"No collection or logic specified for route {route.url}. This route will do nothing!"
-
         # Set the blueprint to the URL specified in the route configuration
-        blueprint.add_url_rule(route.url, route.name, view_func=API.main, methods=route.methods, **({'defaults': route.defaults} if route.defaults else {}))
+        blueprint.add_url_rule(route.url, route.name, view_func=RouteHandler.main, methods=route.handler.methods, **({'defaults': route.defaults} if route.defaults else {}))

@@ -269,7 +269,7 @@ class Task_Manager(Celery):
         
         Returns:
 
-            A `Route` object representing the config for that route
+            A `Task` object representing the config for that task
         '''
         
         return task_config if isinstance(task_config, TaskConfig) else TaskConfig.from_dict(name, task_config)
