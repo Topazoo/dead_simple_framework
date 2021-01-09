@@ -6,7 +6,7 @@
 from .main import Application
 from .database import Database
 from .tasks import Task_Manager
-from .api import API, RouteHandler, DefaultRouteHandler
+from .api import API, RouteHandler, DefaultRouteHandler, API_Error
 
 from .cache import Cache
 from .config import Route, TaskConfig as Task
