@@ -8,7 +8,7 @@
 
 ## Overview:
 
-A dead simple framework for web applications:
+A RESTful Flask framework with MongoDB, Redis and Celery integrations:
 
 Backend:
 

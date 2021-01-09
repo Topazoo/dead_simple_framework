@@ -1,4 +1,4 @@
-''' Dead Simple Framework - Specify APIs with a Python dict and run with one line
+''' Dead Simple Framework - RESTful Flask framework with MongoDB, Redis and Celery integrations
 
     Author: Peter Swanson
 '''
@@ -10,5 +10,3 @@ from .api import API, RouteHandler, DefaultRouteHandler
 
 from .cache import Cache
 from .config import Route, TaskConfig as Task
-
-from .sample import sample_config
