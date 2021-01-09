@@ -5,7 +5,6 @@ sample_config = {
     'routes': {
         'insert': Route( # A route with automatic CRUD support
             url='/insert',
-            handler=DefaultRouteHandler(),
             collection='insert',
         ),
         'demo': Route( # Another route with automatic CRUD support (with all options specified)
