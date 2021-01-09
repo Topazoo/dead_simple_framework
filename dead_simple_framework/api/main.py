@@ -128,8 +128,6 @@ class RouteHandler:
         '''
 
         try:
-            # Get request body parameters
-            payload = request.get_json(force=True) if request.data else {}
             # Remove any passed _id and insert in the database [TODO - allow? Maybe a config option?]
             if payload:
                 payload.pop('_id', None)
@@ -166,8 +164,6 @@ class RouteHandler:
         '''
 
         try:
-            # Get request body parameters
-            payload = request.get_json(force=True) if request.data else {}
             # Use the passed _id to update data in the database
             if payload:
                 _id = payload.get('_id')
@@ -202,8 +198,6 @@ class RouteHandler:
         '''
 
         try:
-            # Get request body parameters
-            payload = request.get_json(force=True) if request.data else {}
             if payload:
                 # Use the passed _id to update data in the database
                 _id = payload.get('_id')

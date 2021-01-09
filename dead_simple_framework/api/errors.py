@@ -3,7 +3,7 @@ from collections import defaultdict
 
 
 class API_Error(Exception):
-    ''' Error thrown internally by the server API when a bad request is received '''
+    ''' Error thrown by the server API when a bad request is received '''
     
     def __init__(self, message, code):
         super(Exception, self).__init__(message)

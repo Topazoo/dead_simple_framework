@@ -2,7 +2,7 @@
 from flask import Blueprint
 
 # Internal API 
-from .api import RouteHandler
+from .api import RouteHandler, DefaultRouteHandler
 
 # Route config class
 from .config import Route
@@ -60,5 +60,8 @@ class Router:
     def configure_blueprint(route:Route, blueprint: Blueprint):
         ''' Adds configurations to the route Blueprint based on the dictionary specification '''
 
+        if not route.handler: # Default
+            route.handler = DefaultRouteHandler()
+
         # Set the blueprint to the URL specified in the route configuration
-        blueprint.add_url_rule(route.url, route.name, view_func=RouteHandler.main, methods=route.handler.methods, **({'defaults': route.defaults} if route.defaults else {}))
+        blueprint.add_url_rule(route.url, route.name, view_func=route.handler.main, methods=route.handler.methods, **({'defaults': route.defaults} if route.defaults else {}))
