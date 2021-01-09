@@ -1,34 +1,77 @@
 # Flask HTTP
-from flask import request, Request, Response, jsonify
-
-# API Errors
-from .errors import API_Error
-
-# API Utilities
-from .utils import *
+from flask import request, Request, Response
 
 # App Settings
 from dead_simple_framework.config import App_Settings
 
+# API Errors
+from .errors import API_Error
+
+# Database
+from ..database import Database
+
 # Route object
 from ..config import Route
 
+# Utils
+from .utils import *
+
 # Typing
 from typing import Callable, Dict
+from pymongo.collection import Collection
 
 # TODO - [Useability]    | Authentication request/verification
 
-class API:
+class RouteHandler:
     ''' Internal HTTP requests handler for Flask routes '''
 
     ROUTES:Dict[str, Route] = {}
+    SUPPORTED_HTTP_METHODS = ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS']
 
-    @classmethod
-    def HANDLER(cls):  # Supported auto-handling for routes
-        return {'GET': cls.GET, 'POST': cls.POST, 'PUT': cls.PUT, 'DELETE': cls.DELETE}
-    
+    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, schema:dict=None):
+        ''' Initialize a new handler for a route
+        
+        Args:
+
+            GET (function): The function to call when a GET request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+
+            POST (function): The function to call when a POST request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+            
+            DELETE (function): The function to call when a DELETE request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+            
+            PUT (function): The function to call when a PUT request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+            
+            PATCH (function): The function to call when a PATCH request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+
+            OPTIONS (function): The function to call when a OPTIONS request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+        '''
+
+        self.GET = GET
+        self.POST = POST
+        self.DELETE = DELETE
+        self.PUT = PUT
+        self.PATCH = PATCH
+        self.OPTIONS = OPTIONS
+
+        self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
+
+        #TODO - JSONSCHEMA Support
+
+
     @staticmethod
-    def GET(request:Request, database:str=None, collection:str=None) -> Response:
+    def GET(request:Request, payload:dict, collection:Collection) -> Response:
         ''' Fetch model data from the server or respond with the appropriate HTTP status code on error. 
         
             The request query string must supply the model's (class) name. It may also supply one or more optional 
@@ -57,24 +100,23 @@ class API:
         '''
         
         try:
-            # Parse the query string into key/value pairs and store
-            payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
             # Use the query string to send a database query
-            data_cursor = fetch_and_filter_data(payload, database, collection)
+            data_cursor = fetch_and_filter_data(payload, collection)
             # Sort the data if one was specified in the query string
             sorted_data = list(sort_data(data_cursor, payload))
 
             return JsonResponse({'data': sorted_data}, 200 if len(sorted_data) > 0 else 404)
             
-        except Exception as e:
-            if App_Settings.APP_ENV == 'development':
-                raise e
+        except API_Error as e:
+            return JsonError('GET', e)
 
+        except Exception as e:
+            if App_Settings.APP_ENV == 'development': raise e
             return JsonError('GET', e)
 
 
     @staticmethod
-    def POST(request:Request, database:str=None, collection:str=None) -> Response:
+    def POST(request:Request, payload, collection:Collection) -> Response:
         ''' Create a new MongoDB record or respond with the appropriate HTTP status code on error. 
             
             --> request : The POST request sent to the server.
@@ -91,21 +133,22 @@ class API:
             # Remove any passed _id and insert in the database [TODO - allow? Maybe a config option?]
             if payload:
                 payload.pop('_id', None)
-                inserted_id = insert_data(payload, database, collection)
+                inserted_id = insert_data(payload, collection)
             else:
                 raise API_Error('No data supplied to POST', 500)
 
             return JsonResponse({'_id': str(inserted_id)}, code=200)
 
-        except Exception as e:
-            if App_Settings.APP_ENV == 'development':
-                raise e
+        except API_Error as e:
+            return JsonError('POST', e)
 
+        except Exception as e:
+            if App_Settings.APP_ENV == 'development': raise e
             return JsonError('POST', e)
 
 
     @staticmethod
-    def PUT(request:Request, database:str=None, collection:str=None) -> Response:
+    def PUT(request:Request, payload:dict, collection:Collection) -> Response:
         ''' Update a MongoDB record or respond with the appropriate HTTP status code on error. 
             
             The request body must supply a dictionary of 
@@ -128,22 +171,23 @@ class API:
             # Use the passed _id to update data in the database
             if payload:
                 _id = payload.get('_id')
-                if not getattr(update_data(payload, database, collection), 'modified_count', None): 
+                if not update_data(payload, collection): 
                     raise API_Error(f'ID [{_id}] not found', 404)
             else:
                 raise API_Error('No data supplied to PUT', 500)
 
             return JsonResponse(code=200)
 
-        except Exception as e:
-            if App_Settings.APP_ENV == 'development':
-                raise e
+        except API_Error as e:
+            return JsonError('PUT', e)
 
+        except Exception as e:
+            if App_Settings.APP_ENV == 'development': raise e
             return JsonError('PUT', e)
 
 
     @staticmethod
-    def DELETE(request:Request, database:str=None, collection:str=None) -> Response:
+    def DELETE(request:Request, payload:dict, collection:Collection) -> Response:
         ''' Delete a MongoDB record or respond with the appropriate HTTP status code on error. 
             
             The request body must supply the ID of the record to delete
@@ -163,35 +207,36 @@ class API:
             if payload:
                 # Use the passed _id to update data in the database
                 _id = payload.get('_id')
-                if not getattr(delete_data(payload, database, collection), 'deleted_count', None):
+                if not delete_data(payload, collection):
                     raise API_Error(f'ID [{_id}] not found', 404)
             else:
                 raise API_Error('No data supplied to DELETE', 500)
 
             return JsonResponse(code=200)
 
-        except Exception as e:
-            if App_Settings.APP_ENV == 'development':
-                raise e
+        except API_Error as e:
+            return JsonError('DELETE', e)
 
+        except Exception as e:
+            if App_Settings.APP_ENV == 'development': raise e
             return JsonError('DELETE', e)
 
 
-    @classmethod
-    def _check_method(cls, method:str, route:Route):
-        ''' Ensure the method is allowed for a route or raise a 405 error '''
+    @staticmethod
+    def _get_handler(method:str, route:Route) -> Callable:
+        ''' Get the handler for the request on a given route or raise a 405 error '''
 
-        # If the method isn't listed in the route conig the user passed it isn't allowed
-        if method not in route.methods:
+        handler = getattr(route.handler, method)
+
+        # If the method isn't listed in the route config handler the user passed, it isn't allowed
+        if not handler:
             raise API_Error(f'Method [{method}] not allowed for route [{route.url}]', 405)
 
-        # If the method doesn't have a handler assigned it isn't allowed
-        if method not in cls.HANDLER():
-            raise API_Error(f'No hanlder for [{method}]', 405)
+        return handler
 
     
-    @classmethod
-    def _check_logic(cls, route_name:str, logic_func:Callable, collection:str):
+    @staticmethod
+    def _check_logic(route_name:str, logic_func:Callable, collection:str):
         ''' Ensure user defined logic '''
 
         num_parameters = len(logic_func.__code__.co_varnames)
@@ -204,7 +249,7 @@ class API:
 
     @classmethod
     def main(cls) -> Response:
-        ''' Called when the /api/ endpoint is sent an HTTP request. Delegates 
+        ''' Called when the speciied endpoint is sent an HTTP request. Delegates 
             to the appropriate handler based on the request method or returns a JSON
             formatted error if the method is not supported.
             --> request : The HTTP request sent to the server.
@@ -215,26 +260,17 @@ class API:
         # Get the configuration for the route that was accessed
         route = cls.ROUTES[str(request.url_rule)]
 
-        # Ensure the method is allowed
-        cls._check_method(request.method, route)
+        # Get the logic for the request if the method is allowed
+        logic = cls._get_handler(request.method, route)
 
-        # Get the collection
-        database, collection = route.database, route.collection
-
-        # Get the logic that should be run for this route (if any)
-        logic = route.logic
-        
-        if not logic: # Use default handling if no logic provided
-            # Run CRUD handling
-            return cls.HANDLER()[request.method](request, database=database, collection=collection)
-
+        # Normalize query params
         if str(request.method) == 'GET':
             payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
         else:
             payload = request.get_json(force=True) if request.data else dict(request.form)
 
-        # Ensure user defined logic can accept arguments to pass or throw a warning
-        cls._check_logic(route.name, logic, collection)
+        # Ensure user defined logic can accept required arguments or throw a warning
+        cls._check_logic(route.name, logic, route.collection)
 
         # If a collection is specified, pass through to next function
         if route.collection or route.database:
@@ -243,3 +279,43 @@ class API:
         
         # Otherwise just pass the request
         return logic(request, payload)
+
+
+class DefaultRouteHandler(RouteHandler):
+    ''' Specifies the default logic to be used for all methods passed
+    
+        TODO - Explanation
+    '''
+
+    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, schema:dict=None):
+        ''' Initialize a new handler for a route
+        
+        Args:
+
+            GET (function): The function to call when a GET request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+
+            POST (function): The function to call when a POST request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+            
+            DELETE (function): The function to call when a DELETE request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+            
+            PUT (function): The function to call when a PUT request is received. The function must accept the 
+                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
+                accepted as well
+        '''
+
+        if GET: self.GET = GET
+        if POST: self.POST = POST
+        if DELETE: self.DELETE = DELETE
+        if PUT: self.PUT = PUT
+        self.PATCH = None
+        self.OPTIONS = None
+
+        self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
+
+        #TODO - JSONSCHEMA Support

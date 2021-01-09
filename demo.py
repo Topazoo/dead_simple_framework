@@ -1,57 +1,38 @@
-from dead_simple_framework import Application, Task_Manager, Database, API, Route, Task
+from dead_simple_framework import Application, Task_Manager, Database, API, Route, RouteHandler, DefaultRouteHandler, Task
 from random import choice
-
-WEBSITES =[
-    "http://www.google.com",
-    "http://www.yahoo.com",
-    "http://www.ebay.com",
-    "http://www.cnn.com",
-    "http://www.pbs.org",
-    "https://www.reddit.com/",
-]
-
-def get_websites(n):
-    _websites = [*WEBSITES]
-    res = []
-    for x in range(n):
-        res.append(choice(_websites))
-        _websites.remove(res[-1])
-
-    return res
-
 
 sample_config = {
     'routes': {
         'insert': Route( # A route with automatic CRUD support
             url='/insert',
-            methods=['GET', 'POST', 'DELETE', 'PUT'],
+            handler=DefaultRouteHandler(),
             collection='insert',
         ),
-        'demo': { # Another route with automatic CRUD support
-            'name': 'demo',
-            'methods': ['GET', 'POST', 'DELETE', 'PUT'],
-            'defaults': None,
-            'logic': None,
-            'collection': 'demo'
-        },
-        '/api/refresh': {  # Route that runs an async task (API call)
-            'name': 'call',
-            'methods': ['GET'],
-            'defaults': None,
-            'logic': lambda x,y: str(Task_Manager.run_task('scheduled_call')),
-        },
-        '/': {  # Route that fetches the last result of an async task (API call)
-            'name': 'call_cached',
-            'methods': ['GET'],
-            'defaults': None,
-            'logic': lambda x,y: str(Task_Manager.get_result('scheduled_call'))
-        },
-        '/add': {  # Route that fetches the last result of an async task (API call)
-            'name': 'add',
-            'methods': ['GET'],
-            'defaults': None,
-            'logic': lambda x,y: str(Task_Manager.run_task('add'))
-        },
+        'demo': Route( # Another route with automatic CRUD support (with all options specified)
+            url='/demo',                    # The URL at which the server should handle requests
+            defaults=None,                  # Default parameters to pass to the handler function for this URL
+            database='db',                  # The database that should be passed to the handler function for this URL 
+            collection='demo',              # The collection that should be passed to the handler function for this URL 
+            handler=DefaultRouteHandler()   # A class specifying the handler functions to use based on the method used to access the URL 
+        ),
+        'refresh': Route(  # Route with a handler for the GET method that runs an async task (in this case an API call)
+            url='/api/refresh',
+            handler=RouteHandler(
+                GET=lambda request, payload: str(Task_Manager.run_task('scheduled_call'))
+            )
+        ),
+        'index': Route(  # Route that fetches the cached latest result of an async task (in this case an API call)
+            url='/',
+            handler=RouteHandler(
+                GET=lambda request, payload: str(Task_Manager.get_result('scheduled_call'))
+            )
+        ),
+        'add': Route(  # Route that runs an async task (in this case simple addition) and fetches the result
+            url='/add',
+            handler=RouteHandler(
+                GET=lambda request, payload: str(Task_Manager.run_task('add'))
+            )
+        ),
     },
 
     'tasks': { # Async tasks available to the Task_Manager [celery] to schedule or run
@@ -75,6 +56,26 @@ sample_config = {
         )
     }
 }
+
+
+WEBSITES =[
+    "http://www.google.com",
+    "http://www.yahoo.com",
+    "http://www.ebay.com",
+    "http://www.cnn.com",
+    "http://www.pbs.org",
+    "https://www.reddit.com/",
+]
+
+def get_websites(n):
+    _websites = [*WEBSITES]
+    res = []
+    for x in range(n):
+        res.append(choice(_websites))
+        _websites.remove(res[-1])
+
+    return res
+
 
 app = Application(sample_config)
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from flask import jsonify, Response
 from .errors import API_Error
 
 # Database
-from ..database import Database
+from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from bson import ObjectId
 
@@ -109,7 +109,7 @@ def create_query_string(query_params:dict) -> str:
     return '?' + '&'.join([f"{k}={v}" for k,v in query_params.items()]) if query_params else ''
 
 
-def fetch_and_filter_data(request_params: dict, database:str=None, collection:str=None) -> list:
+def fetch_and_filter_data(request_params: dict, collection:Collection) -> list:
     ''' Fetch records from the database matching a filter supplied in an HTTP request.
         Ensure fields supplied in the filter exist for the model. If no filter is supplied
         all objects are retrived.
@@ -118,12 +118,12 @@ def fetch_and_filter_data(request_params: dict, database:str=None, collection:st
         <-- A list containing the MongoDB data matching the supplied filter or all objects in a collection.
     '''
 
-    mongo_filter = request_params.get('filter', {}) 
+    mongo_filter = request_params.get('filter', {})
+    if '_id' in mongo_filter: mongo_filter['_id'] = ObjectId(mongo_filter['_id'])
     if request_params.get('sort'):
         [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
 
-    with Database(database,collection) as db:
-        return db.find(mongo_filter)
+    return collection.find(mongo_filter)
     
 
 def sort_data(data: Cursor, request_params: dict) -> list:
@@ -140,18 +140,17 @@ def sort_data(data: Cursor, request_params: dict) -> list:
     return data
 
 
-def insert_data(request_params: dict, database:str=None, collection:str=None) -> str:
+def insert_data(request_params: dict, collection:Collection) -> str:
     ''' Add data to the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
         <-- [str] The ObjectId of the inserted data
     '''
 
     mongo_fields = request_params.copy()
-    with Database(database,collection) as db:
-        return str(db.insert_one(mongo_fields).inserted_id)
+    return str(collection.insert_one(mongo_fields).inserted_id)
 
 
-def update_data(request_params: dict, database:str=None, collection:str=None) -> bool:
+def update_data(request_params: dict, collection:Collection) -> bool:
     ''' Add data to the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
         <-- [bool] True if successful
@@ -159,15 +158,13 @@ def update_data(request_params: dict, database:str=None, collection:str=None) ->
 
     mongo_fields = request_params.copy()
     _id = mongo_fields.pop('_id', None)
-    
     if _id:
-        with Database(database,collection) as db:
-            return db.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields}).acknowledged
+        return collection.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields}).acknowledged
     else:
         raise API_Error('No ID supplied', 400)
 
 
-def delete_data(request_params: dict, database:str=None, collection:str=None) -> bool:
+def delete_data(request_params: dict, collection:Collection) -> bool:
     ''' Delete data from the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
         <-- True if records were deleted
@@ -175,7 +172,6 @@ def delete_data(request_params: dict, database:str=None, collection:str=None) ->
 
     mongo_fields = request_params.copy()
     if mongo_fields.get('_id'):
-        with Database(database,collection) as db:
-            return db.delete_one({'_id': ObjectId(mongo_fields.pop('_id', None))}).deleted_count > 0
+        return collection.delete_one({'_id': ObjectId(mongo_fields.pop('_id'))}).deleted_count > 0
     else:
         raise API_Error('No ID supplied', 400)
