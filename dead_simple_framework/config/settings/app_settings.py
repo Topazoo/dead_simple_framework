@@ -43,6 +43,6 @@ class App_Settings(Setting):
 
         return [
             'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application',
-            f'JSON Web Token verfication is {"enabled" if App_Settings.APP_USE_JWT else "disabled"}. The current key is {"Unsafe and should be changed" if App_Settings.APP_JWT_KEY == "default" else "safe"}',
+            f'JSON Web Token verfication is {"enabled" if App_Settings.APP_USE_JWT else "disabled"}. The current key is {"*unsafe* and should be changed" if App_Settings.APP_JWT_KEY == "default" else "safe"}',
             f'Default API client headers are {App_Settings.APP_API_CLIENT_HEADERS}'
         ]
