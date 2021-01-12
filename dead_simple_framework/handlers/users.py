@@ -31,14 +31,17 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
     def _valid_user_signature(payload):
         ''' Ensure users can only operate on their account '''
 
+        if 'ADMIN' in payload['_JWT_Identity']['permissions']: 
+            return True # TODO - Dynamic admin
+
         _id = payload.get('_id')
         if 'filter' in payload and not _id:
             _id = payload['filter'].get('_id')
 
-        if '_JWT_Identity' not in payload or (not _id and 'ADMIN' not in payload['_JWT_Identity']['permissions']):
+        if '_JWT_Identity' not in payload or not _id:
             return False
 
-        if payload['_JWT_Identity']['_id'] != _id and 'ADMIN' not in payload['_JWT_Identity']['permissions']: # TODO - Dynamic admin
+        if payload['_JWT_Identity']['_id'] != _id:
             return False
 
         return True
