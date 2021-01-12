@@ -2,7 +2,7 @@
 from flask import request, Request, Response
 
 # App Settings
-from dead_simple_framework.config import App_Settings
+from ..config import App_Settings
 
 # API Errors
 from .errors import API_Error
@@ -101,18 +101,18 @@ class RouteHandler:
         
         try:
             # Use the query string to send a database query
-            data_cursor = fetch_and_filter_data(payload, collection)
+            data_cursor = fetch_and_filter_data(payload, collection, lazy=True)
             # Sort the data if one was specified in the query string
             sorted_data = list(sort_data(data_cursor, payload))
 
             return JsonResponse({'data': sorted_data}, 200 if len(sorted_data) > 0 else 404)
             
         except API_Error as e:
-            return JsonError('GET', e)
+            return JsonException('GET', e)
 
         except Exception as e:
             if App_Settings.APP_ENV == 'development': raise e
-            return JsonError('GET', e)
+            return JsonException('GET', e)
 
 
     @staticmethod
@@ -138,11 +138,11 @@ class RouteHandler:
             return JsonResponse({'_id': str(inserted_id)}, code=200)
 
         except API_Error as e:
-            return JsonError('POST', e)
+            return JsonException('POST', e)
 
         except Exception as e:
             if App_Settings.APP_ENV == 'development': raise e
-            return JsonError('POST', e)
+            return JsonException('POST', e)
 
 
     @staticmethod
@@ -175,11 +175,11 @@ class RouteHandler:
             return JsonResponse(code=200)
 
         except API_Error as e:
-            return JsonError('PUT', e)
+            return JsonException('PUT', e)
 
         except Exception as e:
             if App_Settings.APP_ENV == 'development': raise e
-            return JsonError('PUT', e)
+            return JsonException('PUT', e)
 
 
     @staticmethod
@@ -209,11 +209,11 @@ class RouteHandler:
             return JsonResponse(code=200)
 
         except API_Error as e:
-            return JsonError('DELETE', e)
+            return JsonException('DELETE', e)
 
         except Exception as e:
             if App_Settings.APP_ENV == 'development': raise e
-            return JsonError('DELETE', e)
+            return JsonException('DELETE', e)
 
 
     @staticmethod
@@ -273,43 +273,3 @@ class RouteHandler:
         
         # Otherwise just pass the request
         return logic(request, payload)
-
-
-class DefaultRouteHandler(RouteHandler):
-    ''' Specifies the default logic to be used for all methods passed
-    
-        TODO - Explanation
-    '''
-
-    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, schema:dict=None):
-        ''' Initialize a new handler for a route
-        
-        Args:
-
-            GET (function): The function to call when a GET request is received. The function must accept the 
-                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
-                accepted as well
-
-            POST (function): The function to call when a POST request is received. The function must accept the 
-                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
-                accepted as well
-            
-            DELETE (function): The function to call when a DELETE request is received. The function must accept the 
-                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
-                accepted as well
-            
-            PUT (function): The function to call when a PUT request is received. The function must accept the 
-                `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
-                accepted as well
-        '''
-
-        if GET: self.GET = GET
-        if POST: self.POST = POST
-        if DELETE: self.DELETE = DELETE
-        if PUT: self.PUT = PUT
-        self.PATCH = None
-        self.OPTIONS = None
-
-        self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
-
-        #TODO - JSONSCHEMA Support
