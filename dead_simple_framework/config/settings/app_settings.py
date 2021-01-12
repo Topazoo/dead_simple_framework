@@ -17,7 +17,7 @@ class App_Settings(Setting):
     APP_API_CLIENT_HEADERS = {"User-Agent": "Mozilla/5.0"}
     APP_LOG_CONFIG = os.environ.get('APP_LOG_CONFIG', True)
     APP_USE_JWT = os.environ.get('APP_USE_JWT', False)
-    APP_JWT_KEY = os.environ.get('APP_JWT_KEY', 'a-secure-key')
+    APP_JWT_KEY = os.environ.get('APP_JWT_KEY', 'default')
     APP_DEBUG_MODE = True
 
     def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, app_api_client_headers:dict=None, app_log_config:bool=None, app_use_jwt:str=None, app_jwt_key:str=None):
@@ -43,6 +43,6 @@ class App_Settings(Setting):
 
         return [
             'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application',
-            f'JSON Web Token verfication is {"enabled" if App_Settings.APP_USE_JWT else "disabled"}',
+            f'JSON Web Token verfication is {"enabled" if App_Settings.APP_USE_JWT else "disabled"}. The current key is {"Unsafe and should be changed" if App_Settings.APP_JWT_KEY == "default" else "safe"}',
             f'Default API client headers are {App_Settings.APP_API_CLIENT_HEADERS}'
         ]
