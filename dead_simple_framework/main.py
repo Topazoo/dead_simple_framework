@@ -14,8 +14,8 @@ from .tasks import Task_Manager
 # App-wide settings
 from .config.settings.main import Settings
 
-# Utilities
-import os
+# JWT
+from flask_jwt_extended import JWTManager
 
 # Debug
 import logging
@@ -42,6 +42,10 @@ class Application(Task_Manager):
 
         # Create Flask application
         self.app = Flask(__name__)
+
+        # Add JWT support
+        self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
+        JWTManager(self.app)
 
         # Log 3rd party configuration
         Settings.log_config()

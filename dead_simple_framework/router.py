@@ -2,7 +2,7 @@
 from flask import Blueprint
 
 # Internal API 
-from .api import RouteHandler, DefaultRouteHandler
+from .handlers import RouteHandler, DefaultRouteHandler
 
 # Route config class
 from .config import Route

@@ -9,8 +9,8 @@ from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from bson import ObjectId
 
-# Encoding
-import json
+# Typing
+from typing import Union
 
 # Debug
 import logging
@@ -30,8 +30,23 @@ def JsonResponse(content: dict = {}, code: int = 200) -> Response:
     return jsonify(**content)
 
 
-def JsonError(method: str, exception: Exception) -> Response:
-    ''' Format an API JSON error response.
+def JsonError(content: Union[dict, str] = {}, code: int = 500) -> Response:
+    ''' Format an API JSON response.
+        --> content [dict or str] : A dictionary of JSON serializable objects to return or an error message. Optional.
+        
+        --> code [int]: The HTTP status code to return. Optional.
+        
+        <-- The JSON formatted response. { <<content>>, "code": <<code>> }
+    '''
+
+    if isinstance(content, str): content = {'error': content}
+    content['code'] = code
+    
+    return jsonify(**content)
+
+
+def JsonException(method: str, exception: Exception) -> Response:
+    ''' Format an API JSON exception response.
         --> method : The HTTP request method that generated the error (e.g. POST).
         
         --> exception : The error generated.
@@ -44,7 +59,7 @@ def JsonError(method: str, exception: Exception) -> Response:
     
     logging.critical(error_msg)
 
-    return JsonResponse({'msg': error_msg}, error_code)
+    return JsonResponse({'exception': error_msg}, error_code)
 
 
 def parse_query_pairs(payload: str) -> dict:
@@ -109,7 +124,7 @@ def create_query_string(query_params:dict) -> str:
     return '?' + '&'.join([f"{k}={v}" for k,v in query_params.items()]) if query_params else ''
 
 
-def fetch_and_filter_data(request_params: dict, collection:Collection) -> list:
+def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=False) -> list:
     ''' Fetch records from the database matching a filter supplied in an HTTP request.
         Ensure fields supplied in the filter exist for the model. If no filter is supplied
         all objects are retrived.
@@ -123,7 +138,8 @@ def fetch_and_filter_data(request_params: dict, collection:Collection) -> list:
     if request_params.get('sort'):
         [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
 
-    return collection.find(mongo_filter)
+    res = collection.find(mongo_filter)
+    return list(res) if not lazy else res
     
 
 def sort_data(data: Cursor, request_params: dict) -> list:
