@@ -34,6 +34,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
     def verifier(method, payload, identity):
         ''' Ensure users can only operate on their account '''
 
+        if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
         if method != 'POST' and App_Settings.APP_USE_JWT:
             if identity and 'ADMIN' in identity.get('permissions', []): 
                 return True # TODO - Dynamic admin
@@ -72,26 +73,3 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
 
         except Exception as e:
             return JsonException('POST', e)
-
-
-    @classmethod
-    def PUT(cls, request:Request, payload, collection:Collection) -> Response:
-        ''' Update a user ensuring hashed password '''
-
-        if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
-        
-        return {'success': update_data(payload, collection)}
-
-
-    @classmethod
-    def DELETE(cls, request:Request, payload, collection:Collection) -> Response:
-        ''' Delete a user '''
-        
-        return {'success': delete_data(payload, collection)}
-
-
-    @classmethod
-    def GET(cls, request:Request, payload, collection:Collection) -> Response:
-        ''' Get a user or users '''
-        
-        return {'data': fetch_and_filter_data(payload, collection)} # TODO - Dynamic redact
