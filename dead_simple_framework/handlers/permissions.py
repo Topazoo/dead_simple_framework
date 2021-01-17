@@ -6,17 +6,11 @@ import os
 # Base class
 from .default import DefaultRouteHandler, RouteHandler
 
-# Helper method
-from ..api import JsonResponse
-
 # Settings
 from ..config import App_Settings
 
-# JWT
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-
 # Typing
-from typing import Callable, Union
+from typing import Callable
 
 
 class Permissions:
@@ -37,57 +31,49 @@ class PermissionsRouteHandler(RouteHandler):
     ''' Route that only allows access for specific user permissions '''
 
     @staticmethod
-    def hasPermission(current_user:dict, route_permissions:list) -> bool:
+    def hasPermission(current_user:dict, method_permissions:list) -> bool:
         ''' Checks if the current user has permission to access the resource '''
 
-        if not current_user or not current_user.get('permissions'): return False
-        if 'ADMIN' in current_user.get('permissions'): return True # TODO - Dynamic admin
-        if any(role in route_permissions for role in current_user.get('permissions')):
+        user_permissions = current_user.get('permissions')
+        if not current_user or not user_permissions: 
+            return False
+        
+        # TODO - Dynamic admin role
+        if 'ADMIN' in user_permissions or any(role in method_permissions for role in current_user.get('permissions')):
             return True
 
         return False
 
 
-    def permissionDecorator(self, method:Callable, permissions:Union[list,str]=None):
-        if not method: return method
+    def permission_verifier_decorator(self, verifier:Callable, permissions:Permissions):
+        ''' Wrapper for a route verifier that ensures permissions are met before calling the actual verifier '''
 
-        if isinstance(permissions, str):
-            permissions = [permissions]
+        def verifier_wrapper(method, payload, identity):
+            method_permissions = getattr(permissions, method, None)
+            if isinstance(method_permissions, str):
+                method_permissions = [method_permissions]
+                
+            if method_permissions and App_Settings.APP_USE_JWT:
+                if identity and self.hasPermission(identity, method_permissions):
+                    return verifier(method, payload, identity)
+                return False
+            return True
 
-        def accessIfPermission(request, payload, collection):
-            if permissions and App_Settings.APP_USE_JWT:
-                verify_jwt_in_request()
-                current_user = get_jwt_identity() # TODO - Custom error handling
-                payload['_JWT_Identity'] = current_user
-                if not self.hasPermission(current_user, permissions):
-                    return JsonResponse({'Error': f'User {current_user} does not have access to this resource'}, 403)
-            return method(request, payload, collection)
-        return accessIfPermission
+        return verifier_wrapper
+    
 
-
-    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, schema:dict=None):
+    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None, schema:dict=None):
         self.permissions = permissions
-        self.GET = self.permissionDecorator(GET, self.permissions.GET)
-        self.POST = self.permissionDecorator(POST, self.permissions.POST)
-        self.DELETE = self.permissionDecorator(DELETE, self.permissions.DELETE)
-        self.PUT = self.permissionDecorator(PUT, self.permissions.PUT)
-        self.PATCH = self.permissionDecorator(PATCH, self.permissions.PATCH)
-        self.OPTIONS = self.permissionDecorator(OPTIONS, self.permissions.OPTIONS)
+        self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
 
-        self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
+        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, schema=schema)
 
 
 class DefaultPermissionsRouteHandler(PermissionsRouteHandler, DefaultRouteHandler):
     ''' Route that only allows access for specific user permissions '''
 
-    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, schema:dict=None):
+    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None, schema:dict=None):
         self.permissions = permissions
-
-        self.GET = self.permissionDecorator(GET or self.GET, self.permissions.GET)
-        self.POST = self.permissionDecorator(POST or self.POST, self.permissions.POST)
-        self.DELETE = self.permissionDecorator(DELETE or self.DELETE, self.permissions.DELETE)
-        self.PUT = self.permissionDecorator(PUT or self.PUT, self.permissions.PUT)
-        self.PATCH = self.permissionDecorator(PATCH or PATCH, self.permissions.PATCH)
-        self.OPTIONS = self.permissionDecorator(OPTIONS or OPTIONS, self.permissions.OPTIONS)
-
-        self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
+        self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
+        
+        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, schema=schema)

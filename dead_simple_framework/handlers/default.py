@@ -12,7 +12,7 @@ class DefaultRouteHandler(RouteHandler):
         TODO - Explanation
     '''
 
-    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, schema:dict=None):
+    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None,schema:dict=None):
         ''' Initialize a new handler for a route
         
         Args:
@@ -38,8 +38,8 @@ class DefaultRouteHandler(RouteHandler):
         if POST: self.POST = POST
         if DELETE: self.DELETE = DELETE
         if PUT: self.PUT = PUT
-        self.PATCH = None
-        self.OPTIONS = None
+        self.PATCH = PATCH
+        self.OPTIONS = OPTIONS
 
         self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
 

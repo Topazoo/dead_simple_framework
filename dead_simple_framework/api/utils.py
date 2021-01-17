@@ -16,7 +16,7 @@ from typing import Union
 import logging
 
 
-def JsonResponse(content: dict = {}, code: int = 200) -> Response:
+def JsonResponse(content: dict = {}, code: int = 200) -> dict:
     ''' Format an API JSON response.
         --> content [dict] : A dictionary of JSON serializable objects to return. Optional.
         
@@ -27,10 +27,10 @@ def JsonResponse(content: dict = {}, code: int = 200) -> Response:
 
     content['code'] = code
     
-    return jsonify(**content)
+    return content
 
 
-def JsonError(content: Union[dict, str] = {}, code: int = 500) -> Response:
+def JsonError(content: Union[dict, str] = {}, code: int = 500) -> dict:
     ''' Format an API JSON response.
         --> content [dict or str] : A dictionary of JSON serializable objects to return or an error message. Optional.
         
@@ -42,10 +42,10 @@ def JsonError(content: Union[dict, str] = {}, code: int = 500) -> Response:
     if isinstance(content, str): content = {'error': content}
     content['code'] = code
     
-    return jsonify(**content)
+    return content
 
 
-def JsonException(method: str, exception: Exception) -> Response:
+def JsonException(method: str, exception: Exception) -> dict:
     ''' Format an API JSON exception response.
         --> method : The HTTP request method that generated the error (e.g. POST).
         
@@ -59,7 +59,7 @@ def JsonException(method: str, exception: Exception) -> Response:
     
     logging.critical(error_msg)
 
-    return JsonResponse({'exception': error_msg}, error_code)
+    return {'exception': error_msg, 'code': error_code}
 
 
 def parse_query_pairs(payload: str) -> dict:
@@ -133,6 +133,8 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
         <-- A list containing the MongoDB data matching the supplied filter or all objects in a collection.
     '''
 
+    if not collection: raise API_Error('No collection was specified to get data from for this route! Check your Route configuration', 500)
+
     mongo_filter = request_params.get('filter', {})
     if '_id' in mongo_filter: mongo_filter['_id'] = ObjectId(mongo_filter['_id'])
     if request_params.get('sort'):
@@ -162,6 +164,8 @@ def insert_data(request_params: dict, collection:Collection) -> str:
         <-- [str] The ObjectId of the inserted data
     '''
 
+    if not collection: raise API_Error('No collection was specified to insert data for this route! Check your Route configuration', 500)
+
     mongo_fields = request_params.copy()
     return str(collection.insert_one(mongo_fields).inserted_id)
 
@@ -172,9 +176,11 @@ def update_data(request_params: dict, collection:Collection) -> bool:
         <-- [bool] True if successful
     '''
 
+    if not collection: raise API_Error('No collection was specified to update data for this route! Check your Route configuration', 500)
+
     mongo_fields = request_params.copy()
     _id = mongo_fields.pop('_id', None)
-    if _id:
+    if _id: # TODO - CREATE UPSERT / PATCH
         return collection.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields}).acknowledged
     else:
         raise API_Error('No ID supplied', 400)
@@ -185,6 +191,8 @@ def delete_data(request_params: dict, collection:Collection) -> bool:
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
         <-- True if records were deleted
     '''
+
+    if not collection: raise API_Error('No collection was specified to delete data for this route! Check your Route configuration', 500)
 
     mongo_fields = request_params.copy()
     if mongo_fields.get('_id'):
