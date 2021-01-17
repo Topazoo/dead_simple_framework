@@ -56,7 +56,6 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
     def POST(cls, request:Request, payload, collection:Collection) -> Response:
         ''' Create a new user with a hashed password '''
 
-        payload['password'] = sha256.hash(payload.get('password'))
         try:
             payload['permissions'] = cls.USER_PERMISSIONS
             _id = insert_data(payload, collection)
