@@ -20,7 +20,7 @@ class App_Settings(Setting):
     APP_JWT_KEY = os.environ.get('APP_JWT_KEY', 'default')
     APP_DEBUG_MODE = True
 
-    def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, app_api_client_headers:dict=None, app_log_config:bool=None, app_use_jwt:str=None, app_jwt_key:str=None):
+    def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, app_api_client_headers:dict=None, app_log_config:bool=None, app_use_jwt:bool=None, app_jwt_key:str=None):
         if app_env: App_Settings.APP_ENV = app_env
         os.environ['FLASK_ENV'] = App_Settings.APP_ENV
 

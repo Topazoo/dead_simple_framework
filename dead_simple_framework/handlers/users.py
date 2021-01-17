@@ -18,28 +18,35 @@ from flask import Request, Response
 # Typing
 from pymongo.collection import Collection
 
+from ..config.settings import App_Settings
+
 
 class UserRouteHandler(DefaultPermissionsRouteHandler):
 
     USER_PERMISSIONS = ['USER'] # TODO - Make dynamic
+    VERIFIER_FAILED_MESSAGE = 'User not authorized to access the data of other users'
 
-    def __init__(self, permissions, schema:dict=None):
-        super().__init__(permissions, GET=self.GET, POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, schema=schema)
+    def __init__(self, permissions, verifier=None, schema:dict=None):
+        super().__init__(permissions, GET=self.GET, POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, verifier=verifier, schema=schema)
 
 
     @staticmethod
-    def _valid_user_signature(payload):
+    def verifier(method, payload, identity):
         ''' Ensure users can only operate on their account '''
 
-        _id = payload.get('_id')
-        if 'filter' in payload and not _id:
-            _id = payload['filter'].get('_id')
+        if method != 'POST' and App_Settings.APP_USE_JWT:
+            if identity and 'ADMIN' in identity.get('permissions', []): 
+                return True # TODO - Dynamic admin
 
-        if '_JWT_Identity' not in payload or (not _id and 'ADMIN' not in payload['_JWT_Identity']['permissions']):
-            return False
+            _id = payload.get('_id')
+            if 'filter' in payload and not _id:
+                _id = payload['filter'].get('_id')
 
-        if payload['_JWT_Identity']['_id'] != _id and 'ADMIN' not in payload['_JWT_Identity']['permissions']: # TODO - Dynamic admin
-            return False
+            if not identity or not _id:
+                return False
+
+            if identity['_id'] != _id:
+                return False
 
         return True
 
@@ -57,11 +64,11 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
             access_token = create_access_token(identity=identity)
             refresh_token = create_refresh_token(identity=identity)
 
-            return JsonResponse({
+            return {
                 'id': _id,
                 'access_token': access_token,
                 'refresh_token': refresh_token
-            })
+            }
 
         except Exception as e:
             return JsonException('POST', e)
@@ -72,35 +79,19 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
         ''' Update a user ensuring hashed password '''
 
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
-        try:
-            if not cls._valid_user_signature(payload):
-                return JsonError('User not authorized to update a different user', 403)
-            return JsonResponse({'success': update_data(payload, collection)})
-        except Exception as e:
-            return JsonException('PUT', e)
+        
+        return {'success': update_data(payload, collection)}
 
 
     @classmethod
     def DELETE(cls, request:Request, payload, collection:Collection) -> Response:
         ''' Delete a user '''
-
-        if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
-        try:
-            if not cls._valid_user_signature(payload):
-                return JsonError('User not authorized to delete a different user', 403)
-            return JsonResponse({'success': delete_data(payload, collection)})
-        except Exception as e:
-            return JsonException('DELETE', e)
+        
+        return {'success': delete_data(payload, collection)}
 
 
     @classmethod
     def GET(cls, request:Request, payload, collection:Collection) -> Response:
         ''' Get a user or users '''
-
-        if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
-        try:
-            if not cls._valid_user_signature(payload):
-                return JsonError('User not authorized to view a different user', 403)
-            return JsonResponse({'success': fetch_and_filter_data(payload, collection)}) # TODO - Dynamic redact
-        except Exception as e:
-            return JsonException('GET', e)
+        
+        return {'data': fetch_and_filter_data(payload, collection)} # TODO - Dynamic redact

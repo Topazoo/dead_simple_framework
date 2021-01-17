@@ -13,12 +13,22 @@ from ..database import Database
 # Route object
 from ..config import Route
 
+# Encoding
+from ..encoder import JSON_Encoder
+
+# JWT
+from flask_jwt_extended import verify_jwt_in_request_optional, get_jwt_identity
+
 # Utils
 from .utils import *
+from json import dumps
 
 # Typing
 from typing import Callable, Dict
 from pymongo.collection import Collection
+
+# Exceptions
+import traceback
 
 # TODO - [Useability]    | Authentication request/verification
 
@@ -27,8 +37,9 @@ class RouteHandler:
 
     ROUTES:Dict[str, Route] = {}
     SUPPORTED_HTTP_METHODS = ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS']
+    VERIFIER_FAILED_MESSAGE = 'Payload verification failed. Ensure data is correct and try again'
 
-    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, schema:dict=None):
+    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None, schema:dict=None):
         ''' Initialize a new handler for a route
         
         Args:
@@ -56,6 +67,8 @@ class RouteHandler:
             OPTIONS (function): The function to call when a OPTIONS request is received. The function must accept the 
                 `request` and `payload` argments. If a collection is specified, the `collection` argument must be 
                 accepted as well
+
+            verifier (function): The function to check the contents of the payload. Should return True if the payload is valid or False if not
         '''
 
         self.GET = GET
@@ -65,9 +78,28 @@ class RouteHandler:
         self.PATCH = PATCH
         self.OPTIONS = OPTIONS
 
+        if verifier: self.verifier = verifier
+
         self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
 
         #TODO - JSONSCHEMA Support
+
+
+    @staticmethod
+    def verifier(method:str, payload:dict, identity:dict) -> bool:
+        ''' Arbitrary logic that can be specified by the user to validate the payload received by an endpoint
+            
+            Args:
+
+                method (str): The method that the endpoint was accessed with
+
+                payload (dictionary): The payload received at the endpoint
+
+                identity (dictionary): The JWT identity received determined the endpoint
+        
+        '''
+
+        return True
 
 
     @staticmethod
@@ -220,7 +252,7 @@ class RouteHandler:
     def _get_handler(method:str, route:Route) -> Callable:
         ''' Get the handler for the request on a given route or raise a 405 error '''
 
-        handler = getattr(route.handler, method)
+        handler = getattr(route.handler, method, None)
 
         # If the method isn't listed in the route config handler the user passed, it isn't allowed
         if not handler:
@@ -250,26 +282,42 @@ class RouteHandler:
             <-- JSON containing the HTTP status code signifying the request's success or failure and
                 all other data returned from the server.
         '''
+        try:
+            # Get the configuration for the route that was accessed
+            route = cls.ROUTES[str(request.url_rule)]
 
-        # Get the configuration for the route that was accessed
-        route = cls.ROUTES[str(request.url_rule)]
+            # Get the logic for the request if the method is allowed
+            logic = cls._get_handler(request.method, route)
 
-        # Get the logic for the request if the method is allowed
-        logic = cls._get_handler(request.method, route)
+            # Normalize query params
+            if str(request.method) == 'GET':
+                payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
+            else:
+                payload = request.get_json(force=True) if request.data else dict(request.form)
 
-        # Normalize query params
-        if str(request.method) == 'GET':
-            payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
-        else:
-            payload = request.get_json(force=True) if request.data else dict(request.form)
+            # Ensure user defined logic can accept required arguments or throw a warning
+            cls._check_logic(route.name, logic, route.collection)
 
-        # Ensure user defined logic can accept required arguments or throw a warning
-        cls._check_logic(route.name, logic, route.collection)
+            # Set JWT in payload if it exists
+            verify_jwt_in_request_optional()
+            current_user = get_jwt_identity()
 
-        # If a collection is specified, pass through to next function
-        if route.collection or route.database:
-            with Database(database=route.database, collection=route.collection) as collection:
-                return logic(request, payload, collection)
-        
-        # Otherwise just pass the request
-        return logic(request, payload)
+            # Ensure the payload passes the route verifier
+            if not cls.verifier(request.method, payload, current_user): 
+                raise API_Error(cls.VERIFIER_FAILED_MESSAGE, 400)
+
+            # If a collection is specified, pass through to next function, otherwise just pass the request
+            if route.collection or route.database:
+                with Database(database=route.database, collection=route.collection) as collection:
+                    return Response(dumps(logic(request, payload, collection), cls=JSON_Encoder), 200, mimetype='application/json')
+            
+            return Response(dumps(logic(request, payload), cls=JSON_Encoder), 200, mimetype='application/json')
+
+        except API_Error as e:
+            return Response(e.to_response(), e.code, mimetype='application/json')
+        except Exception as e:
+            return Response(dumps({
+                'error': str(e),
+                'traceback': str(traceback.format_exc()),
+                'code': 500
+            }, cls=JSON_Encoder), 500, mimetype='application/json')

@@ -43,11 +43,11 @@ class LoginRouteHandler(RouteHandler):
         access_token = create_access_token(identity=identity)
         refresh_token = create_refresh_token(identity=identity)
 
-        return JsonResponse({
+        return {
             '_id': str(user['_id']),
             'access_token': access_token,
             'refresh_token': refresh_token
-        })
+        }
 
 
     @staticmethod
@@ -55,4 +55,4 @@ class LoginRouteHandler(RouteHandler):
         ''' Attempt to log out for a specified user '''
 
         # TODO - Implement
-        return JsonResponse({'success': True})
+        return {'success': True}

@@ -12,7 +12,7 @@ setuptools.setup(
     name='dead_simple_framework',
     license="MIT",
     description='RESTful Flask framework with MongoDB, Redis and Celery integrations',
-    version='v0.6.6',
+    version='v0.7.4',
     long_description=README,
     url='https://github.com/Topazoo/dead_simple_framework',
     packages=setuptools.find_packages(),

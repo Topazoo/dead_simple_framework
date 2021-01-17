@@ -26,7 +26,7 @@ class TokenRouteHandler(RouteHandler):
         current_user = get_jwt_identity()
         access_token = create_access_token(identity = current_user)
         refresh_token = create_refresh_token(identity = current_user)
-        return JsonResponse({
+        return {
             'access_token': access_token,
             'refresh_token': refresh_token
-        })
+        }

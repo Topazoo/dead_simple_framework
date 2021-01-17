@@ -1,13 +1,22 @@
 # Storage Utilities
 from collections import defaultdict
 
+# Encoding
+from json import dumps
 
 class API_Error(Exception):
     ''' Error thrown by the server API when a bad request is received '''
     
     def __init__(self, message, code):
         super(Exception, self).__init__(message)
+        self.message = message
         self.code = code
+
+    def to_response(self):
+        return dumps({
+            'error': self.message,
+            'code': self.code
+        })
 
 
 class API_Client_Error(Exception):
