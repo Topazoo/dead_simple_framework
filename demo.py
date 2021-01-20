@@ -1,4 +1,4 @@
-from dead_simple_framework import Application, Task_Manager, Database, API, Route, RouteHandler, DefaultRouteHandler, Task
+from dead_simple_framework import Application, Task_Manager, Database, API, Route, RouteHandler, DefaultRouteHandler, Task, UserRouteHandler, Permissions, LoginRouteHandler
 from random import choice
 
 sample_config = {
@@ -53,7 +53,7 @@ sample_config = {
             logic=lambda: Task_Manager.parallelize([['call_api', [x]] for x in get_websites(3)]),
             schedule={}
         )
-    }
+    },
 }
 
 

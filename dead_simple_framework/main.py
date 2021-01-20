@@ -15,7 +15,7 @@ from .tasks import Task_Manager
 from .config.settings.main import Settings
 
 # JWT
-from flask_jwt_extended import JWTManager
+from .jwt import jwt
 
 # Debug
 import logging
@@ -45,7 +45,8 @@ class Application(Task_Manager):
 
         # Add JWT support
         self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
-        JWTManager(self.app)
+        self.app.config['JWT_BLACKLIST_ENABLED'] = True if Settings.APP_USE_JWT else False
+        jwt.init_app(self.app)
 
         # Log 3rd party configuration
         Settings.log_config()
@@ -63,7 +64,6 @@ class Application(Task_Manager):
         if Settings.APP_ENABLE_CORS: CORS(self.app)
 
         Application._app = self
-
 
     def run(self):
         ''' Runs the server '''

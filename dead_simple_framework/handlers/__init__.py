@@ -5,4 +5,3 @@ from .permissions import PermissionsRouteHandler, DefaultPermissionsRouteHandler
 from ..api.main import RouteHandler
 from .login import LoginRouteHandler
 from .users import UserRouteHandler
-from .token import TokenRouteHandler
