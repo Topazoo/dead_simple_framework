@@ -54,12 +54,6 @@ sample_config = {
             schedule={}
         )
     },
-
-    'settings': {
-        'app_settings': {
-            'app_use_jwt': True
-        }
-    }
 }
 
 

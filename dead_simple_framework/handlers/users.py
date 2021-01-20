@@ -1,6 +1,7 @@
 ''' Builtin handler with default user routes '''
 
 # Base class
+from dead_simple_framework.api.main import RouteHandler
 from .permissions import DefaultPermissionsRouteHandler
 from .login import LoginRouteHandler
 
@@ -32,7 +33,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
     VERIFIER_FAILED_MESSAGE = 'User not authorized to access the data of other users'
 
     def __init__(self, permissions, verifier=None, schema:dict=None):
-        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, verifier=verifier, schema=schema)
+        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier, schema=schema)
 
 
     @staticmethod
@@ -85,7 +86,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
         try:
             identity = get_jwt_identity()
             with Database(collection='_jwt_tokens') as tokens_collection:
-                delete_data({'_id': identity['_id']}, tokens_collection, delete_all=True)
+                delete_data({'_id': payload['_id']}, tokens_collection, delete_all=True)
             
             result = delete_data(payload, collection)
             return {'success': result}

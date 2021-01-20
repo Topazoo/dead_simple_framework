@@ -299,8 +299,10 @@ class RouteHandler:
             cls._check_logic(route.name, logic, route.collection)
 
             # Set JWT in payload if it exists
-            verify_jwt_in_request_optional()
-            current_user = get_jwt_identity()
+            current_user = None
+            if App_Settings.APP_USE_JWT:
+                verify_jwt_in_request_optional()
+                current_user = get_jwt_identity()
 
             # Ensure the payload passes the route verifier
             if not cls.verifier(request.method, payload, current_user): 

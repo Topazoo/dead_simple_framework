@@ -45,7 +45,7 @@ class Application(Task_Manager):
 
         # Add JWT support
         self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
-        self.app.config['JWT_BLACKLIST_ENABLED'] = True
+        self.app.config['JWT_BLACKLIST_ENABLED'] = True if Settings.APP_USE_JWT else False
         jwt.init_app(self.app)
 
         # Log 3rd party configuration
