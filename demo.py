@@ -1,4 +1,4 @@
-from dead_simple_framework import Application, Task_Manager, Database, API, Route, RouteHandler, DefaultRouteHandler, Task
+from dead_simple_framework import Application, Task_Manager, Database, API, Route, RouteHandler, DefaultRouteHandler, Task, UserRouteHandler, Permissions, LoginRouteHandler
 from random import choice
 
 sample_config = {
@@ -32,6 +32,19 @@ sample_config = {
                 GET=lambda request, payload: str(Task_Manager.run_task('add'))
             )
         ),
+        'users': Route(
+            url = '/users',
+            handler=UserRouteHandler(permissions=Permissions(
+                PUT='USER', PATCH='USER', GET='USER'
+            )),
+            collection='users'
+        ),
+            # Authentication
+        'authentication': Route(
+            url='/api/authenticate', 
+            handler=LoginRouteHandler(),
+            collection='users'
+        ),
     },
 
     'tasks': { # Async tasks available to the Task_Manager [celery] to schedule or run
@@ -53,6 +66,12 @@ sample_config = {
             logic=lambda: Task_Manager.parallelize([['call_api', [x]] for x in get_websites(3)]),
             schedule={}
         )
+    },
+
+    'settings': {
+        'app_settings': {
+            'app_use_jwt': True
+        }
     }
 }
 

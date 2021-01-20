@@ -140,7 +140,6 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
     if request_params.get('sort'):
         [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
 
-    print(mongo_filter)
     res = collection.find(mongo_filter)
     return list(res) if not lazy else res
     
@@ -171,9 +170,10 @@ def insert_data(request_params: dict, collection:Collection) -> str:
     return str(collection.insert_one(mongo_fields).inserted_id)
 
 
-def update_data(request_params: dict, collection:Collection) -> bool:
+def update_data(request_params: dict, collection:Collection, upsert:bool=False) -> bool:
     ''' Add data to the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
+        --> upsert [bool] : Whether to insert data if it isn't found
         <-- [bool] True if successful
     '''
 
@@ -181,22 +181,24 @@ def update_data(request_params: dict, collection:Collection) -> bool:
 
     mongo_fields = request_params.copy()
     _id = mongo_fields.pop('_id', None)
-    if _id: # TODO - CREATE UPSERT / PATCH
-        return collection.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields}).acknowledged
+    if _id:
+        return collection.update_one({'_id': ObjectId(_id)}, {'$set': mongo_fields}, upsert=upsert).acknowledged
     else:
         raise API_Error('No ID supplied', 400)
 
 
-def delete_data(request_params: dict, collection:Collection) -> bool:
+def delete_data(request_params: dict, collection:Collection, delete_all:bool=False) -> bool:
     ''' Delete data from the collection with the parameters sent in an HTTP request.
         --> request_params [dict] : The parameters sent with the request (in querystring or body).
+        --> delete_all [bool] : True if all records matching the filter should be deleted
         <-- True if records were deleted
     '''
 
     if not collection: raise API_Error('No collection was specified to delete data for this route! Check your Route configuration', 500)
 
     mongo_fields = request_params.copy()
+    func = collection.delete_many if delete_all else collection.delete_one
     if mongo_fields.get('_id'):
-        return collection.delete_one({'_id': ObjectId(mongo_fields.pop('_id'))}).deleted_count > 0
+        return func({'_id': ObjectId(mongo_fields.pop('_id'))}).deleted_count > 0
     else:
         raise API_Error('No ID supplied', 400)

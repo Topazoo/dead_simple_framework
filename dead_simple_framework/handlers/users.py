@@ -2,15 +2,19 @@
 
 # Base class
 from .permissions import DefaultPermissionsRouteHandler
+from .login import LoginRouteHandler
 
 # Password hashing
 from passlib.hash import pbkdf2_sha256 as sha256
 
 # JWT
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import get_jwt_identity
+
+# Database
+from ..database import Database
 
 # Responses
-from ..api.utils import JsonException, insert_data
+from ..api.utils import JsonException, delete_data, insert_data
 
 # Flask HTTP
 from flask import Request, Response
@@ -22,13 +26,13 @@ from pymongo.collection import Collection
 from ..config.settings import App_Settings
 
 
-class UserRouteHandler(DefaultPermissionsRouteHandler):
+class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
 
-    USER_PERMISSIONS = ['USER'] # TODO - Make dynamic
+    DEFAULT_PERMISSIONS = ['USER'] # TODO - Make dynamic
     VERIFIER_FAILED_MESSAGE = 'User not authorized to access the data of other users'
 
     def __init__(self, permissions, verifier=None, schema:dict=None):
-        super().__init__(permissions, GET=self.GET, POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, verifier=verifier, schema=schema)
+        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, verifier=verifier, schema=schema)
 
 
     @staticmethod
@@ -58,12 +62,11 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
         ''' Create a new user with a hashed password '''
 
         try:
-            payload['permissions'] = cls.USER_PERMISSIONS
+            payload['permissions'] = cls.DEFAULT_PERMISSIONS
             _id = insert_data(payload, collection)
             
-            identity = {'user': payload.get('username'), '_id': str(_id), 'permissions': payload['permissions']}
-            access_token = create_access_token(identity=identity)
-            refresh_token = create_refresh_token(identity=identity)
+            identity = {'username': payload.get('username'), '_id': str(_id), 'permissions': payload['permissions']}
+            access_token, refresh_token = cls.update_stored_token(identity)
 
             return {
                 'id': _id,
@@ -73,3 +76,19 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
 
         except Exception as e:
             return JsonException('POST', e)
+
+
+    @classmethod
+    def DELETE(cls, request:Request, payload, collection:Collection) -> Response:
+        ''' Create a new user with a hashed password '''
+
+        try:
+            identity = get_jwt_identity()
+            with Database(collection='_jwt_tokens') as tokens_collection:
+                delete_data({'_id': identity['_id']}, tokens_collection, delete_all=True)
+            
+            result = delete_data(payload, collection)
+            return {'success': result}
+
+        except Exception as e:
+            return JsonException('DELETE', e)
