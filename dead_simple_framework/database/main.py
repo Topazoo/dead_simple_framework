@@ -1,9 +1,10 @@
 # MongoDB
 from pymongo import MongoClient
 from pymongo.collection import Collection
+from pymongo.errors import OperationFailure
 
 # MongoDB Settings
-from ..config import MongoDB_Settings
+from ..config import App_Settings, MongoDB_Settings
 
 # Utilities
 import os
@@ -23,6 +24,25 @@ class Database:
         # For use with the context manager (`with` statement)
         self.database = database
         self.collection = collection
+
+
+    @classmethod
+    def register_indices(cls, indices=None):
+        ''' Create user specified indices in MongoDB '''
+
+        indices = indices or {} # TODO - ALLOW IN SETTINGS
+        if App_Settings.APP_USE_JWT:
+            indices['_jwt_tokens'] = [{'indices': [('modified_on', -1)], 'expireAfterSeconds':10}]
+
+        for coll,index_list in indices.items():
+            with cls(collection=coll) as collection:
+                try:
+                    [collection.create_index(index.pop('indices'), **index) for index in index_list]
+                except OperationFailure as e:
+                    if e.code == 85:
+                        pass
+                    else:
+                        raise e
 
 
     def connect(self, database:str=None, collection:str=None) -> Collection:

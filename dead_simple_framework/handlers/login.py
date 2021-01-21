@@ -15,6 +15,7 @@ from ..jwt import jwt
 
 # Utils
 from ..api.utils import JsonError, update_data, delete_data
+from datetime import datetime
 
 # Flask HTTP
 from flask import Request, Response
@@ -56,8 +57,9 @@ class LoginRouteHandler(RouteHandler):
             update_data({
                 '_id': identity['_id'],
                 'username': identity['username'],
-                'token': decode_token(access_token)['jti']
-            }, collection, True)
+                'token': decode_token(access_token)['jti'],
+                'modified_on': datetime.now()
+            }, collection, upsert=True)
 
         return access_token, refresh_token
 

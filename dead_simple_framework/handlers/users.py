@@ -22,6 +22,7 @@ from flask import Request, Response
 
 # Typing
 from pymongo.collection import Collection
+from pymongo.errors import OperationFailure
 
 # Settings
 from ..config.settings import App_Settings
@@ -30,11 +31,11 @@ from ..config.settings import App_Settings
 class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
 
     DEFAULT_PERMISSIONS = ['USER'] # TODO - Make dynamic
-    VERIFIER_FAILED_MESSAGE = 'User not authorized to access the data of other users'
+    VERIFIER_FAILED_MESSAGE = 'User not authorized'
 
     def __init__(self, permissions, verifier=None, schema:dict=None):
         super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier, schema=schema)
-
+        Database.register_indices({'users': [{'indices': [('username', -1)], 'unique':True}]})
 
     @staticmethod
     def verifier(method, payload, identity):
@@ -75,6 +76,11 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
                 'refresh_token': refresh_token
             }
 
+        except OperationFailure as e:
+            if e.code == 11000:
+                return JsonException('POST', f'User [{e.details["keyValue"]["username"]}] already exists')
+            else:
+                raise e
         except Exception as e:
             return JsonException('POST', e)
 

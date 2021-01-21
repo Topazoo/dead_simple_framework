@@ -11,6 +11,9 @@ from .encoder import JSON_Encoder
 # Async Tasks
 from .tasks import Task_Manager
 
+# Database
+from .database import Database
+
 # App-wide settings
 from .config.settings.main import Settings
 
@@ -39,6 +42,9 @@ class Application(Task_Manager):
         ''' Initialize the server based on the configuration dictionary '''
 
         Settings(**config.get('settings', {})) 
+
+        # Create database indices
+        Database.register_indices()
 
         # Create Flask application
         self.app = Flask(__name__)
