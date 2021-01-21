@@ -59,7 +59,7 @@ def JsonException(method: str, exception: Exception) -> dict:
     
     logging.critical(error_msg)
 
-    return {'exception': error_msg, 'code': error_code}
+    raise API_Error(error_msg, code=error_code)
 
 
 def parse_query_pairs(payload: str) -> dict:
@@ -135,7 +135,7 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
 
     if not collection: raise API_Error('No collection was specified to get data from for this route! Check your Route configuration', 500)
 
-    mongo_filter = request_params.get('filter', {})
+    mongo_filter = request_params.get('filter') or request_params
     if '_id' in mongo_filter: mongo_filter['_id'] = ObjectId(mongo_filter['_id'])
     if request_params.get('sort'):
         [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
