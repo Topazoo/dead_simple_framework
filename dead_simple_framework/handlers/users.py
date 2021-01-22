@@ -1,7 +1,7 @@
 ''' Builtin handler with default user routes '''
 
 # Base class
-from dead_simple_framework.api.main import RouteHandler
+from dead_simple_framework.api.main import RouteHandler, SchemaHandler
 from .permissions import DefaultPermissionsRouteHandler
 from .login import LoginRouteHandler
 
@@ -34,7 +34,8 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
     VERIFIER_FAILED_MESSAGE = 'User not authorized'
 
     def __init__(self, permissions, verifier=None, schema:dict=None):
-        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier, schema=schema)
+        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier)
+        if schema: self.schema = SchemaHandler.validate_schema_structure(schema)
         Database.register_indices({'users': [{'indices': [('username', -1)], 'unique':True}]})
 
     @staticmethod

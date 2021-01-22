@@ -1,7 +1,7 @@
 ''' Builtin handler with default CRUD handling '''
 
 # Base class
-from ..api.main import RouteHandler
+from ..api.main import RouteHandler, SchemaHandler
 
 # Typing
 from typing import Callable
@@ -12,7 +12,7 @@ class DefaultRouteHandler(RouteHandler):
         TODO - Explanation
     '''
 
-    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None,schema:dict=None):
+    def __init__(self, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None,verifier:Callable=None, schema:dict=None):
         ''' Initialize a new handler for a route
         
         Args:
@@ -41,6 +41,6 @@ class DefaultRouteHandler(RouteHandler):
         self.PATCH = PATCH
         self.OPTIONS = OPTIONS
 
+        if verifier: self.verifier = verifier
+        if schema: self.schema = SchemaHandler.validate_schema_structure(schema)
         self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
-
-        #TODO - JSONSCHEMA Support
