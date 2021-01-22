@@ -1,5 +1,9 @@
 # JSONSchema
 from jsonschema import validate
+from jsonschema.exceptions import ValidationError
+
+# Errors
+from .errors import API_Error
 
 # logging
 import logging
@@ -21,13 +25,17 @@ class SchemaHandler:
         return schema
 
 
-    def validate_request(self, method:str, request:dict):
+    def validate_request(self, route:str, method:str, request:dict):
         ''' Validate a request against the provided schema '''
 
         if method in self.schema:
             method_schema = self.schema[method].copy()
             method_schema.pop('redact')
-            validate(request, method_schema)
+
+            try:
+                validate(request, method_schema)
+            except ValidationError as e:
+                raise API_Error(f'Schema validation for [{method}] request to route [{route}] failed! Error: {e.message} Schema: {method_schema}', 400)
 
         return True
 
@@ -43,7 +51,10 @@ class SchemaHandler:
         if len(path) == 1:
             del response_chunk[path[0]]; return
 
-        self._redact(fullpath, path[1:], response_chunk[path[0]])
+        if not isinstance(response_chunk[path[0]], list):
+            self._redact(fullpath, path[1:], response_chunk[path[0]])
+        else:
+            [self._redact(fullpath, path[1:], response_chunk_item) for response_chunk_item in response_chunk[path[0]]]
 
         if not response_chunk[path[0]]:
            del response_chunk[path[0]]

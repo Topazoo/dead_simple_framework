@@ -309,15 +309,15 @@ class RouteHandler:
                 raise API_Error(cls.VERIFIER_FAILED_MESSAGE, 400)
 
             # Ensure the payload passes schema validation
-            schema_handler = SchemaHandler(cls.schema)
-            schema_handler.validate_request(request.method, payload)
+            schema_handler = SchemaHandler(route.handler.schema)
+            schema_handler.validate_request(request.url_rule, request.method, payload)
 
             # If a collection is specified, pass through to next function, otherwise just pass the request
             if route.collection or route.database:
                 with Database(database=route.database, collection=route.collection) as collection:
-                    return Response(dumps(schema_handler.redact_response(logic(request, payload, collection)), 
+                    return Response(dumps(schema_handler.redact_response(request.method, logic(request, payload, collection)), 
                                             cls=JSON_Encoder), 200, mimetype='application/json')
-            return Response(dumps(schema_handler.redact_response(logic(request, payload)), cls=JSON_Encoder), 200, mimetype='application/json')
+            return Response(dumps(schema_handler.redact_response(request.method, logic(request, payload)), cls=JSON_Encoder), 200, mimetype='application/json')
 
         except API_Error as e:
             return Response(e.to_response(), e.code, mimetype='application/json')

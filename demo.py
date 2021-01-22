@@ -32,19 +32,6 @@ sample_config = {
                 GET=lambda request, payload: str(Task_Manager.run_task('add'))
             )
         ),
-        'users': Route(
-            url = '/users',
-            handler=UserRouteHandler(permissions=Permissions(
-                PUT='USER', PATCH='USER', GET='USER'
-            )),
-            collection='users'
-        ),
-        # Authentication
-        'authentication': Route(
-            url='/api/authenticate', 
-            handler=LoginRouteHandler(),
-            collection='users'
-        ),
     },
 
     'tasks': { # Async tasks available to the Task_Manager [celery] to schedule or run
@@ -67,14 +54,6 @@ sample_config = {
             schedule={}
         )
     },
-
-    'settings': {
-        'app_settings': {
-            'app_use_jwt': True,
-            'app_jwt_lifespan': 20,
-            'app_permissions': ['RECLAIMER']
-        }
-    }
 }
 
 
