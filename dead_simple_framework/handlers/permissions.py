@@ -16,8 +16,6 @@ from typing import Callable
 class Permissions:
     ''' Class that stores allowed permissions for each method '''
 
-    DEFAULT_PERMISSIONS_LIST = os.environ.get('DEFAULT_PERMISSIONS_LIST', ['ADMIN', 'USER']) # TODO - Move to Config
-
     def __init__(self, GET:list=None, POST:list=None, DELETE:list=None, PUT:list=None, PATCH:list=None, OPTIONS:list=None):
         self.GET = GET
         self.POST = POST
