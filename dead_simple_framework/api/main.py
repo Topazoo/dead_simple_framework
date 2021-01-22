@@ -30,7 +30,6 @@ from pymongo.collection import Collection
 # Exceptions
 import traceback
 
-# TODO - [Useability]    | Authentication request/verification
 
 class RouteHandler:
     ''' Internal HTTP requests handler for Flask routes '''
