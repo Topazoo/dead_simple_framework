@@ -19,6 +19,9 @@ from ..encoder import JSON_Encoder
 # JWT
 from flask_jwt_extended import verify_jwt_in_request_optional, get_jwt_identity
 
+# Schemas
+from .schema import SchemaHandler
+
 # Utils
 from .utils import *
 from json import dumps
@@ -78,10 +81,8 @@ class RouteHandler:
         self.OPTIONS = OPTIONS
 
         if verifier: self.verifier = verifier
-
+        if schema: self.schema = SchemaHandler.validate_schema_structure(schema)
         self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))
-
-        #TODO - JSONSCHEMA Support
 
 
     @staticmethod
@@ -307,18 +308,18 @@ class RouteHandler:
             if not cls.verifier(request.method, payload, current_user): 
                 raise API_Error(cls.VERIFIER_FAILED_MESSAGE, 400)
 
+            # Ensure the payload passes schema validation
+            schema_handler = SchemaHandler(cls.schema)
+            schema_handler.validate_request(request.method, payload)
+
             # If a collection is specified, pass through to next function, otherwise just pass the request
             if route.collection or route.database:
                 with Database(database=route.database, collection=route.collection) as collection:
-                    return Response(dumps(logic(request, payload, collection), cls=JSON_Encoder), 200, mimetype='application/json')
-            
-            return Response(dumps(logic(request, payload), cls=JSON_Encoder), 200, mimetype='application/json')
+                    return Response(dumps(schema_handler.redact_response(logic(request, payload, collection)), 
+                                            cls=JSON_Encoder), 200, mimetype='application/json')
+            return Response(dumps(schema_handler.redact_response(logic(request, payload)), cls=JSON_Encoder), 200, mimetype='application/json')
 
         except API_Error as e:
             return Response(e.to_response(), e.code, mimetype='application/json')
         except Exception as e:
-            return Response(dumps({
-                'error': str(e),
-                'traceback': str(traceback.format_exc()),
-                'code': 500
-            }, cls=JSON_Encoder), 500, mimetype='application/json')
+            return Response(dumps({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, cls=JSON_Encoder), 500, mimetype='application/json')
