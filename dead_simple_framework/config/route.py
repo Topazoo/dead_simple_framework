@@ -1,12 +1,15 @@
 # Interface class
 from .config import Config
 
+# Schema manager
+from .schema import SchemaHandler
+
 class Route(Config):
     ''' Used to specify a route in the config dictionary '''
 
     CONFIG_TYPE = 'url'
 
-    def __init__(self, url:str, handler=None, name:str=None, defaults:dict=None, collection:str=None, database:str=None):
+    def __init__(self, url:str, handler=None, name:str=None, defaults:dict=None, collection:str=None, database:str=None, schema:dict=None):
         ''' Initialize a new route to add to the route config 
         
         Args:
@@ -32,3 +35,4 @@ class Route(Config):
         self.handler = handler
         self.collection = collection
         self.database = database
+        self.schema_handler = SchemaHandler(schema)

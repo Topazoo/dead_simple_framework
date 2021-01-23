@@ -3,7 +3,7 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 # Errors
-from .errors import API_Error
+from ..api.errors import API_Error
 
 # logging
 import logging
@@ -12,8 +12,8 @@ import logging
 class SchemaHandler:
     ''' Driver for JSONSchema parsing and validation '''
 
-    def __init__(self, schema:dict):
-        self.schema = schema
+    def __init__(self, schema:dict=None):
+        self.schema = self.validate_schema_structure(schema) if schema else {}
 
 
     @staticmethod

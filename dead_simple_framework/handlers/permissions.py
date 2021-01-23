@@ -62,18 +62,18 @@ class PermissionsRouteHandler(RouteHandler):
         return verifier_wrapper
     
 
-    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None, schema:dict=None):
+    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None):
         self.permissions = permissions
         self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
 
-        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, schema=schema)
+        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS)
 
 
 class DefaultPermissionsRouteHandler(PermissionsRouteHandler, DefaultRouteHandler):
     ''' Route that only allows access for specific user permissions '''
 
-    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None, schema:dict=None):
+    def __init__(self, permissions:Permissions, GET:Callable=None, POST:Callable=None, DELETE:Callable=None, PUT:Callable=None, PATCH:Callable=None, OPTIONS:Callable=None, verifier:Callable=None):
         self.permissions = permissions
         self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
         
-        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, schema=schema)
+        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS)
