@@ -32,7 +32,7 @@ class Database:
 
         indices = indices or {} # TODO - ALLOW IN SETTINGS
         if App_Settings.APP_USE_JWT:
-            indices['_jwt_tokens'] = [{'indices': [('modified_on', -1)], 'expireAfterSeconds':10}]
+            indices['_jwt_tokens'] = [{'indices': [('modified_on', -1)], 'expireAfterSeconds': App_Settings.APP_JWT_LIFESPAN}]
 
         for coll,index_list in indices.items():
             with cls(collection=coll) as collection:
