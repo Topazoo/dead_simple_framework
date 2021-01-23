@@ -35,11 +35,12 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
 
     def __init__(self, permissions, verifier=None):
         super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier)
-        Database.register_indices({'users': [{'indices': [('username', -1)], 'unique':True}]})
 
     @staticmethod
     def verifier(method, payload, identity):
         ''' Ensure users can only operate on their account '''
+
+        Database.register_indices({'users': [{'indices': [('username', -1)], 'unique':True}]})
 
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
         if method != 'POST' and App_Settings.APP_USE_JWT:
