@@ -57,6 +57,13 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
             if identity['_id'] != _id:
                 return False
 
+            permissions = payload.get('permissions')
+            if 'filter' in payload and not permissions:
+                permissions = payload['filter'].get('permissions')
+
+            if permissions and not 'ADMIN' in identity.get('permissions', []):
+                return False
+
         return True
 
 
