@@ -27,8 +27,8 @@ from typing import Tuple
 
 class LoginRouteHandler(RouteHandler):
 
-    def __init__(self, schema:dict=None):
-        super().__init__(POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, schema=schema)
+    def __init__(self):
+        super().__init__(POST=self.POST, PUT=self.PUT, DELETE=self.DELETE)
 
         @jwt.token_in_blacklist_loader
         def check_if_token_revoked(decoded_token):
