@@ -12,7 +12,7 @@ from .encoder import JSON_Encoder
 from .tasks import Task_Manager
 
 # Database
-from .database import Database
+from .database import Indices, Index
 
 # App-wide settings
 from .config.settings.main import Settings
@@ -44,7 +44,7 @@ class Application(Task_Manager):
         Settings(**config.get('settings', {})) 
 
         # Create database indices
-        Database.register_indices()
+        self.indices = Indices.from_dict(config.get('indices'))
 
         # Create Flask application
         self.app = Flask(__name__)
@@ -53,6 +53,16 @@ class Application(Task_Manager):
         self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
         self.app.config['JWT_BLACKLIST_ENABLED'] = True if Settings.APP_USE_JWT else False
         jwt.init_app(self.app)
+
+        # Add JWT Indices
+        if Settings.APP_USE_JWT:
+            self.indices.add_indices('_jwt_tokens', [
+                Index(field='modified_on', order=-1, properties={'expireAfterSeconds': Settings.APP_JWT_LIFESPAN}),
+                Index(field='token', order=-1)
+            ], False)
+
+        # Register database indices
+        self.indices.register_indices()
 
         # Log 3rd party configuration
         Settings.log_config()
