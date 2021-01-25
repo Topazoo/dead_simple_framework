@@ -12,7 +12,7 @@ from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import get_jwt_identity
 
 # Database
-from ..database import Database
+from ..database import Database, Indices, Index
 
 # Responses
 from ..api.utils import JsonException, delete_data, insert_data
@@ -40,7 +40,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
     def verifier(method, payload, identity):
         ''' Ensure users can only operate on their account '''
 
-        Database.register_indices({'users': [{'indices': [('username', -1)], 'unique':True}]})
+        Indices().add_index('users', Index('username', -1, {'unique': True}))
 
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
         if method != 'POST' and App_Settings.APP_USE_JWT:
