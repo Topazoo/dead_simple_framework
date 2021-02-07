@@ -13,15 +13,8 @@ from ..database import Database
 # Route object
 from ..config import Route
 
-# Encoding
-from ..encoder import JSON_Encoder
-
-# JWT
-from flask_jwt_extended import verify_jwt_in_request_optional, get_jwt_identity
-
 # Utils
 from .utils import *
-from json import dumps
 
 # Typing
 from typing import Callable, Dict
@@ -200,7 +193,7 @@ class RouteHandler:
             else:
                 raise API_Error('No data supplied to PUT', 500)
 
-            return JsonResponse(code=200)
+            return JsonResponse({'success': True}, code=200)
 
         except API_Error as e:
             return JsonException('PUT', e)
@@ -234,7 +227,7 @@ class RouteHandler:
             else:
                 raise API_Error('No data supplied to DELETE', 500)
 
-            return JsonResponse(code=200)
+            return JsonResponse({'success': True}, code=200)
 
         except API_Error as e:
             return JsonException('DELETE', e)
@@ -294,26 +287,23 @@ class RouteHandler:
             # Ensure user defined logic can accept required arguments or throw a warning
             cls._check_logic(route.name, logic, route.collection)
 
-            # Set JWT in payload if it exists
-            current_user = None
-            if App_Settings.APP_USE_JWT:
-                verify_jwt_in_request_optional()
-                current_user = get_jwt_identity()
-
-            # Ensure the payload passes the route verifier
-            if not cls.verifier(request.method, payload, current_user): 
-                raise API_Error(cls.VERIFIER_FAILED_MESSAGE, 400)
-
             # Ensure the payload passes schema validation
             route.schema_handler.validate_request(request.url_rule, request.method, payload)
+
+            # Ensure the payload passes the route verifier
+            if getattr(route.handler, 'verifier', None) and not route.handler.verifier(request.method, payload, None): 
+                raise API_Error(cls.VERIFIER_FAILED_MESSAGE, 400)
 
             # If a collection is specified, pass through to next function, otherwise just pass the request
             if route.collection or route.database:
                 with Database(database=route.database, collection=route.collection) as collection:
-                    return Response(dumps(route.schema_handler.redact_response(request.method, logic(request, payload, collection)), cls=JSON_Encoder), 200, mimetype='application/json')
-            return Response(dumps(route.schema_handler.redact_response(request.method, logic(request, payload)), cls=JSON_Encoder), 200, mimetype='application/json')
+                    response = logic(request, payload, collection)
+                    return route.schema_handler.redact_response(request.method, JsonResponse(response) if not isinstance(response, Response) else response)
+
+            response = logic(request, payload)
+            return route.schema_handler.redact_response(request.method, JsonResponse(response) if not isinstance(response, Response) else response)
 
         except API_Error as e:
-            return Response(e.to_response(), e.code, mimetype='application/json')
+            return JsonError(e.message, e.code)
         except Exception as e:
-            return Response(dumps({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, cls=JSON_Encoder), 500, mimetype='application/json')
+            return JsonError({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, 500)

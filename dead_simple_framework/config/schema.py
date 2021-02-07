@@ -1,11 +1,15 @@
 # JSONSchema
+from json import dumps
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 # Errors
 from ..api.errors import API_Error
 
-# logging
+# Flask
+from flask import Response
+
+# Logging
 import logging
 
 
@@ -60,15 +64,17 @@ class SchemaHandler:
            del response_chunk[path[0]]
 
 
-    def redact_response(self, method:str, response:dict):
+    def redact_response(self, method:str, response:Response):
         ''' Redact a response payload bbased on the provided schema '''
 
+        data = response.get_json()
         if method in self.schema:
             method_schema = self.schema[method].copy()
             redactions = method_schema.get('redact', [])
 
             for redaction in redactions:
                 redaction_path = redaction.split('.')
-                self._redact(redaction, redaction_path, response)
+                self._redact(redaction, redaction_path, data)
 
+        response.set_data(dumps(data))
         return response

@@ -1,7 +1,7 @@
 ''' Builtin handler with default login routes '''
 
 # Base class
-from .default import RouteHandler
+from .permissions import Permissions, PermissionsRouteHandler
 
 # Password hashing
 from passlib.hash import pbkdf2_sha256 as sha256
@@ -10,11 +10,12 @@ from passlib.hash import pbkdf2_sha256 as sha256
 from ..database import Database
 
 # JWT
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_refresh_token_required, get_jwt_identity, decode_token
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, \
+                                decode_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies
 from ..jwt import jwt
 
 # Utils
-from ..api.utils import JsonError, update_data, delete_data
+from ..api.utils import JsonError, JsonResponse, update_data, delete_data
 from datetime import datetime
 
 # Flask HTTP
@@ -25,10 +26,10 @@ from pymongo.collection import Collection
 from typing import Tuple
 
 
-class LoginRouteHandler(RouteHandler):
+class LoginRouteHandler(PermissionsRouteHandler):
 
-    def __init__(self):
-        super().__init__(POST=self.POST, PUT=self.PUT, DELETE=self.DELETE)
+    def __init__(self, permissions:Permissions=None):
+        super().__init__(POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, permissions=permissions or Permissions(PUT=['USER'], DELETE=['USER']))
 
         @jwt.token_in_blacklist_loader
         def check_if_token_revoked(decoded_token):
@@ -80,28 +81,34 @@ class LoginRouteHandler(RouteHandler):
         
         identity = {'username': user['username'], '_id': str(user['_id']), 'permissions': permissions}
         access_token, refresh_token = cls.update_stored_token(identity)
-
-        return {
+        response = JsonResponse({
             '_id': str(user['_id']),
             'access_token': access_token,
             'refresh_token': refresh_token
-        }
+        })
+
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+        return response
 
 
     @classmethod
-    @jwt_refresh_token_required
     def PUT(cls, request:Request, payload, collection:Collection) -> Response:
         ''' Create a refresh token '''
 
         identity = get_jwt_identity()
         if not identity:
-            raise JsonError('Could not refresh access token, failed to validate refresh token')
+            return JsonError('Could not refresh access token, failed to validate refresh token')
 
         access_token, refresh_token = cls.update_stored_token(identity)
-        return {
+        response = JsonResponse({
             'access_token': access_token,
             'refresh_token': refresh_token
-        }
+        })
+
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+        return response
 
 
     @staticmethod
@@ -110,9 +117,14 @@ class LoginRouteHandler(RouteHandler):
 
         identity = get_jwt_identity()
         if not identity:
-            raise JsonError('Could not delete access token, failed to validate access token')
+            return JsonError('Could not delete access token, failed to validate access token')
 
         with Database(collection='_jwt_tokens') as collection:
             result = delete_data({'_id': identity['_id']}, collection, delete_all=True)
+            if result:
+                response = JsonResponse({'success': True})
+                unset_jwt_cookies(response)
+            else:
+                return JsonError('Unable to find user session', 404)
 
-        return {'success': result}
+        return response

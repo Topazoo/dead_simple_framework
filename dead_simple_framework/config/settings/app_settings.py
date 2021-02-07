@@ -20,6 +20,7 @@ class App_Settings(Setting):
     APP_LOG_CONFIG = os.environ.get('APP_LOG_CONFIG', True)
 
     APP_USE_JWT = os.environ.get('APP_USE_JWT', False)
+    APP_CSRF_PROTECT = os.environ.get('APP_CSRF_PROTECT', False)
     APP_JWT_KEY = os.environ.get('APP_JWT_KEY', 'default')
     APP_JWT_LIFESPAN = os.environ.get('APP_JWT_LIFESPAN', 600)
     APP_PERMISSIONS = json.loads(os.environ.get('APP_PERMISSIONS', '["ADMIN", "USER"]'))
@@ -28,7 +29,7 @@ class App_Settings(Setting):
 
     def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, 
                     app_api_client_headers:dict=None, app_log_config:bool=None, app_use_jwt:bool=None, 
-                        app_jwt_key:str=None, app_jwt_lifespan:int=None, app_permissions:list=None):
+                    app_csrf_protect:bool=None, app_jwt_key:str=None, app_jwt_lifespan:int=None, app_permissions:list=None):
 
         if app_env: App_Settings.APP_ENV = app_env
         os.environ['FLASK_ENV'] = App_Settings.APP_ENV
@@ -41,6 +42,7 @@ class App_Settings(Setting):
         if app_log_config: App_Settings.APP_LOG_CONFIG = app_log_config
 
         if app_use_jwt: App_Settings.APP_USE_JWT = app_use_jwt
+        if app_csrf_protect: App_Settings.APP_CSRF_PROTECT = app_csrf_protect
         if app_jwt_key: App_Settings.APP_JWT_KEY = app_jwt_key
         if app_jwt_lifespan: App_Settings.APP_JWT_LIFESPAN = app_jwt_lifespan
 
@@ -58,5 +60,6 @@ class App_Settings(Setting):
             'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application',
             f'JSON Web Token verfication is {"enabled" if App_Settings.APP_USE_JWT else "disabled"}.' +\
             f'The current key is {"*unsafe* and should be changed" if App_Settings.APP_JWT_KEY == "default" else "safe"}. The current token lifespan is {App_Settings.APP_JWT_LIFESPAN} seconds' if App_Settings.APP_USE_JWT else '',
+            f'CSRF protection is currently {"enabled" if App_Settings.APP_CSRF_PROTECT else "disabled"}.',
             f'Default API client headers are {App_Settings.APP_API_CLIENT_HEADERS}'
         ]
