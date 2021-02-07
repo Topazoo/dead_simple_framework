@@ -1,5 +1,5 @@
 # Flask HTTP
-from flask import jsonify, Response
+from flask import Response
 
 # API Errors
 from .errors import API_Error
@@ -12,11 +12,17 @@ from bson import ObjectId
 # Typing
 from typing import Union
 
+# Utils
+from json import dumps
+
+# Encoding
+from ..encoder import JSON_Encoder
+
 # Debug
 import logging
 
 
-def JsonResponse(content: dict = {}, code: int = 200) -> dict:
+def JsonResponse(content: dict = {}, code: int = 200) -> Response:
     ''' Format an API JSON response.
         --> content [dict] : A dictionary of JSON serializable objects to return. Optional.
         
@@ -25,12 +31,11 @@ def JsonResponse(content: dict = {}, code: int = 200) -> dict:
         <-- The JSON formatted response. { <<content>>, "code": <<code>> }
     '''
 
-    content['code'] = code
-    
-    return content
+
+    return Response(dumps(content, cls=JSON_Encoder), code, mimetype='application/json')
 
 
-def JsonError(content: Union[dict, str] = {}, code: int = 500) -> dict:
+def JsonError(content: Union[dict, str] = {}, code: int = 500) -> Response:
     ''' Format an API JSON response.
         --> content [dict or str] : A dictionary of JSON serializable objects to return or an error message. Optional.
         
@@ -40,22 +45,23 @@ def JsonError(content: Union[dict, str] = {}, code: int = 500) -> dict:
     '''
 
     if isinstance(content, str): content = {'error': content}
-    content['code'] = code
     
-    return content
+    return Response(dumps(content, cls=JSON_Encoder), code, mimetype='application/json')
 
 
-def JsonException(method: str, exception: Exception) -> dict:
+def JsonException(method: str, exception: Exception, code: int=500) -> dict:
     ''' Format an API JSON exception response.
         --> method : The HTTP request method that generated the error (e.g. POST).
         
         --> exception : The error generated.
+
+        --> exception : The error code.
         
         <-- A JSON formatted error response : { "msg" <<error_message>>, "code": <<code>> }.
     '''
 
     error_msg = '{} - {}'.format(method, str(exception)) 
-    error_code = exception.code if type(exception) == API_Error else 500
+    error_code = exception.code if type(exception) == API_Error else code
     
     logging.critical(error_msg)
 

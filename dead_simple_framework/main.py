@@ -50,12 +50,8 @@ class Application(Task_Manager):
         self.app = Flask(__name__)
 
         # Add JWT support
-        self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
-        self.app.config['JWT_BLACKLIST_ENABLED'] = True if Settings.APP_USE_JWT else False
-        jwt.init_app(self.app)
-
-        # Add JWT Indices
         if Settings.APP_USE_JWT:
+            self._setup_jwt()
             self.indices.add_indices('_jwt_tokens', [
                 Index(field='modified_on', order=-1, properties={'expireAfterSeconds': Settings.APP_JWT_LIFESPAN}),
                 Index(field='token', order=-1)
@@ -80,6 +76,22 @@ class Application(Task_Manager):
         if Settings.APP_ENABLE_CORS: CORS(self.app)
 
         Application._app = self
+
+
+    def _setup_jwt(self):
+        ''' Adds JWT config options '''
+
+        self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
+        self.app.config['JWT_BLACKLIST_ENABLED'] = True if Settings.APP_USE_JWT else False
+        self.app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+        if Settings.APP_CSRF_PROTECT:
+            self.app.config['JWT_COOKIE_CSRF_PROTECT'] = True
+            self.app.config['JWT_CSRF_CHECK_FORM'] = True
+        else:
+            self.app.config['JWT_COOKIE_CSRF_PROTECT'] = False
+        
+        jwt.init_app(self.app)
+
 
     def run(self):
         ''' Runs the server '''

@@ -2,20 +2,20 @@
 
 # Base class
 from dead_simple_framework.api.main import RouteHandler
-from .permissions import DefaultPermissionsRouteHandler
+from .permissions import DefaultPermissionsRouteHandler, Permissions
 from .login import LoginRouteHandler
 
 # Password hashing
 from passlib.hash import pbkdf2_sha256 as sha256
 
 # JWT
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, set_access_cookies, set_refresh_cookies, unset_jwt_cookies
 
 # Database
 from ..database import Database, Indices, Index
 
 # Responses
-from ..api.utils import JsonException, delete_data, insert_data
+from ..api.utils import JsonError, JsonException, JsonResponse, delete_data, insert_data
 
 # Flask HTTP
 from flask import Request, Response
@@ -28,19 +28,23 @@ from pymongo.errors import OperationFailure
 from ..config.settings import App_Settings
 
 
-class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
+class UserRouteHandler(DefaultPermissionsRouteHandler):
 
     DEFAULT_PERMISSIONS = ['USER'] # TODO - Make dynamic
     VERIFIER_FAILED_MESSAGE = 'User not authorized'
 
-    def __init__(self, permissions, verifier=None):
-        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier)
+    def __init__(self, permissions=Permissions(PUT='USER', PATCH='USER', GET='USER', DELETE='USER'), verifier=None):
+        Indices.add_indices('users',[
+            Index('username', -1, {'unique': True}),
+            Index('email_address', -1, {'unique': True}),
+        ], register=False)
+
+        super().__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier or self.verifier)
+
 
     @staticmethod
     def verifier(method, payload, identity):
         ''' Ensure users can only operate on their account '''
-
-        Indices().add_index('users', Index('username', -1, {'unique': True}))
 
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
         if method != 'POST' and App_Settings.APP_USE_JWT:
@@ -72,21 +76,27 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
         ''' Create a new user with a hashed password '''
 
         try:
+            payload['password'] = sha256.hash(payload.get('password'))
             payload['permissions'] = cls.DEFAULT_PERMISSIONS
             _id = insert_data(payload, collection)
             
             identity = {'username': payload.get('username'), '_id': str(_id), 'permissions': payload['permissions']}
-            access_token, refresh_token = cls.update_stored_token(identity)
+            access_token, refresh_token = LoginRouteHandler.update_stored_token(identity)
 
-            return {
-                'id': _id,
+            response = JsonResponse({
+                '_id': _id,
                 'access_token': access_token,
                 'refresh_token': refresh_token
-            }
+            })
+
+            set_access_cookies(response, access_token)
+            set_refresh_cookies(response, refresh_token)
+            return response
 
         except OperationFailure as e:
             if e.code == 11000:
-                return JsonException('POST', f'User [{e.details["keyValue"]["username"]}] already exists')
+                field = list(e.details['keyValue'].keys())[0]
+                return JsonException('POST', f'{field} [{e.details["keyValue"][field]}] already exists', 409)
             else:
                 raise e
         except Exception as e:
@@ -103,7 +113,12 @@ class UserRouteHandler(DefaultPermissionsRouteHandler, LoginRouteHandler):
                 delete_data({'_id': payload['_id']}, tokens_collection, delete_all=True)
             
             result = delete_data(payload, collection)
-            return {'success': result}
+            if result:
+                response = JsonResponse({'success': True})
+                unset_jwt_cookies(response)
+                return response
+
+            return JsonError(f'User {identity["username"]} not found in database!', 404)
 
         except Exception as e:
             return JsonException('DELETE', e)

@@ -6,6 +6,9 @@ import os
 # Base class
 from .default import DefaultRouteHandler, RouteHandler
 
+# JWT
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
+
 # Settings
 from ..config import App_Settings
 
@@ -54,6 +57,8 @@ class PermissionsRouteHandler(RouteHandler):
                 method_permissions = [method_permissions]
                 
             if method_permissions and App_Settings.APP_USE_JWT:
+                verify_jwt_in_request_optional()
+                identity = get_jwt_identity()
                 if identity and self.hasPermission(identity, method_permissions):
                     return verifier(method, payload, identity)
                 return False
@@ -66,7 +71,7 @@ class PermissionsRouteHandler(RouteHandler):
         self.permissions = permissions
         self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
 
-        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS)
+        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, verifier=self.verifier)
 
 
 class DefaultPermissionsRouteHandler(PermissionsRouteHandler, DefaultRouteHandler):
@@ -76,4 +81,4 @@ class DefaultPermissionsRouteHandler(PermissionsRouteHandler, DefaultRouteHandle
         self.permissions = permissions
         self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
         
-        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS)
+        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, verifier=self.verifier)
