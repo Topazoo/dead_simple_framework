@@ -95,7 +95,7 @@ class Indices:
     
     @classmethod
     def from_dict(cls, indices:Union[dict, "Indices"]) -> "Indices":
-        return cls(indices) if isinstance(indices, dict) else indices
+        return indices if isinstance(indices, Indices) else cls(indices)
 
 
     @classmethod
