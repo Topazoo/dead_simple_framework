@@ -71,7 +71,7 @@ class PermissionsRouteHandler(RouteHandler):
         self.permissions = permissions
         self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
 
-        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS)
+        super().__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, verifier=self.verifier)
 
 
 class DefaultPermissionsRouteHandler(PermissionsRouteHandler, DefaultRouteHandler):
@@ -81,4 +81,4 @@ class DefaultPermissionsRouteHandler(PermissionsRouteHandler, DefaultRouteHandle
         self.permissions = permissions
         self.verifier = self.permission_verifier_decorator(verifier or self.verifier, permissions)
         
-        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS)
+        super(DefaultRouteHandler, self).__init__(GET=GET, POST=POST, DELETE=DELETE, PUT=PUT, PATCH=PATCH, OPTIONS=OPTIONS, verifier=self.verifier)

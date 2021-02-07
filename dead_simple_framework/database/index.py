@@ -14,11 +14,14 @@ import logging
 class Indices:
     ''' Client to store a collection of MongoDB index information '''
 
+    INDICES = {}
+
     def __init__(self, indices:dict=None):
-        self.indices = self._parse_indices_dict(indices) if indices else {}
+        self._merge_dicts(self.INDICES, self._parse_indices_dict(indices) if indices else {})
 
 
-    def _parse_indices_dict(self, indices:dict) -> Dict[str, Dict[str, "Index"]]:
+    @staticmethod
+    def _parse_indices_dict(indices:dict) -> Dict[str, Dict[str, "Index"]]:
         ''' Convert a dictionary of indices in the config to Index objects for storage '''
 
         parsed_indices = {}
@@ -33,38 +36,41 @@ class Indices:
         return parsed_indices
 
 
-    def add_index(self, collection:str, index:Union["Index", dict], register:bool=True):
+    @classmethod
+    def add_index(cls, collection:str, index:Union["Index", dict], register:bool=True):
         ''' Add an index to a specified MongoDB collection '''
 
-        if collection not in self.indices:
-            self.indices[collection] = {}
+        if collection not in cls.INDICES:
+            cls.INDICES[collection] = {}
 
         if isinstance(index, dict):
             field = list(index.keys())[0]; index = Index.from_dict(collection, field, index[field])
 
-        if index.field in self.indices[collection]:
+        if index.field in cls.INDICES[collection]:
             logging.warning(f"Index [{index.field}] for collection [{collection}] was overwritten")
 
-        self.indices[collection][index.field] = index
+        cls.INDICES[collection][index.field] = index
 
         if register:
-            self.register_indices()
+            cls.register_indices()
 
 
-    def add_indices(self, collection:str, indices:list[Union["Index", dict]], register:bool=True):
+    @classmethod
+    def add_indices(cls, collection:str, indices:list[Union["Index", dict]], register:bool=True):
         ''' Add a list of indices to a specified MongoDB collection '''
 
         for index in indices:
-            self.add_index(collection, index, False)
+            cls.add_index(collection, index, False)
 
         if register:
-            self.register_indices()
+            cls.register_indices()
 
 
-    def register_indices(self):
+    @classmethod
+    def register_indices(cls):
         ''' Create user specified indices in MongoDB '''
 
-        curr_indices = self.indices.copy()
+        curr_indices = cls.INDICES.copy()
         for collection,indices in curr_indices.items():
             compounds = [index.compound_with for index in indices.values() if index.compound_with]
             with Database(collection=collection) as coll:
@@ -92,8 +98,22 @@ class Indices:
         return cls(indices) if isinstance(indices, dict) else indices
 
 
+    @classmethod
+    def _merge_dicts(cls, d1:dict, d2:dict):
+        ''' Utility for merging dictionaries on all levels '''
+
+        for key in d2:
+            if key in d1:
+                if isinstance(d2[key], dict):
+                    cls._merge_dicts(d1[key], d2[key])
+                else:
+                    d1[key] = d2[key]
+            else:
+                d1[key] = d2[key]
+
+
     def __repr__(self) -> str:
-        return f'<indices: {[x for x in self.indices.items()]}>' 
+        return f'<indices: {[x for x in self.INDICES.items()]}>' 
 
 
 class Index:

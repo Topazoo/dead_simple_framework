@@ -34,13 +34,17 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
     VERIFIER_FAILED_MESSAGE = 'User not authorized'
 
     def __init__(self, permissions=Permissions(PUT='USER', PATCH='USER', GET='USER', DELETE='USER'), verifier=None):
-        super(DefaultPermissionsRouteHandler, self).__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier)
+        Indices().add_indices('users',[
+            Index('username', -1, {'unique': True}),
+            Index('email_address', -1, {'unique': True}),
+        ], register=False)
+
+        super().__init__(permissions, GET=self.GET, POST=self.POST, DELETE=self.DELETE, PUT=RouteHandler.PUT, verifier=verifier or self.verifier)
+
 
     @staticmethod
     def verifier(method, payload, identity):
         ''' Ensure users can only operate on their account '''
-
-        Indices().add_index('users', Index('username', -1, {'unique': True}))
 
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
         if method != 'POST' and App_Settings.APP_USE_JWT:
@@ -80,7 +84,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
             access_token, refresh_token = LoginRouteHandler.update_stored_token(identity)
 
             response = JsonResponse({
-                'id': _id,
+                '_id': _id,
                 'access_token': access_token,
                 'refresh_token': refresh_token
             })
@@ -91,7 +95,8 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
 
         except OperationFailure as e:
             if e.code == 11000:
-                return JsonException('POST', f'User [{e.details["keyValue"]["username"]}] already exists', 409)
+                field = list(e.details['keyValue'].keys())[0]
+                return JsonException('POST', f'{field} [{e.details["keyValue"][field]}] already exists', 409)
             else:
                 raise e
         except Exception as e:
