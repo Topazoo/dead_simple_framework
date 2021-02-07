@@ -34,7 +34,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
     VERIFIER_FAILED_MESSAGE = 'User not authorized'
 
     def __init__(self, permissions=Permissions(PUT='USER', PATCH='USER', GET='USER', DELETE='USER'), verifier=None):
-        Indices().add_indices('users',[
+        Indices.add_indices('users',[
             Index('username', -1, {'unique': True}),
             Index('email_address', -1, {'unique': True}),
         ], register=False)
