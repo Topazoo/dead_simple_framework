@@ -31,9 +31,9 @@ class LoginRouteHandler(PermissionsRouteHandler):
     def __init__(self, permissions:Permissions=None):
         super().__init__(POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, permissions=permissions or Permissions(PUT=['USER'], DELETE=['USER']))
 
-        @jwt.token_in_blacklist_loader
-        def check_if_token_revoked(decoded_token):
-            return self.is_token_revoked(decoded_token)
+        @jwt.token_in_blocklist_loader
+        def check_if_token_revoked(_, body):
+            return self.is_token_revoked(body)
 
 
     @staticmethod

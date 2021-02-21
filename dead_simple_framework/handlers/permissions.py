@@ -7,7 +7,7 @@ import os
 from .default import DefaultRouteHandler, RouteHandler
 
 # JWT
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request_optional
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 # Settings
 from ..config import App_Settings
@@ -57,7 +57,7 @@ class PermissionsRouteHandler(RouteHandler):
                 method_permissions = [method_permissions]
                 
             if method_permissions and App_Settings.APP_USE_JWT:
-                verify_jwt_in_request_optional()
+                verify_jwt_in_request(optional=True)
                 identity = get_jwt_identity()
                 if identity and self.hasPermission(identity, method_permissions):
                     return verifier(method, payload, identity)
