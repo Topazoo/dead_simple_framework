@@ -6,6 +6,6 @@ requests>=2.23.0
 redis>=3.5.2
 eventlet==0.25.2
 pyOpenSSL==20.0.0
-Flask-JWT-Extended==3.25.0
+Flask-JWT-Extended==4.0.2
 passlib==1.7.4
 jsonschema==3.2.0
