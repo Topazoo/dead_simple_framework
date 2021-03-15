@@ -14,6 +14,7 @@ from typing import Union
 
 # Utils
 from json import dumps
+import re
 
 # Encoding
 from ..encoder import JSON_Encoder
@@ -68,6 +69,23 @@ def JsonException(method: str, exception: Exception, code: int=500) -> dict:
     raise API_Error(error_msg, code=error_code)
 
 
+def normalize_op_params(field:str, op_string:str) -> dict:
+    ''' Normalize operations: `|` (OR query) and `[val, val]` (in) in query params to Mongo queries '''
+
+    if '[' and ']' in op_string:
+        op_string = op_string[1:-1]
+        list_params = op_string.split(',')
+        return {field: {'$in': list_params}}
+
+    if '|' in op_string:
+        or_params = op_string.split('|')
+        return {'$or': [
+            {field: param} for param in or_params
+        ]}
+
+    return op_string
+
+
 def parse_query_pairs(payload: str) -> dict:
     ''' Parse out one or more key/value pairs from a query string
         (e.g. /api/?param=key:value || /api/?param=key1:value1,key2:value2).
@@ -77,8 +95,15 @@ def parse_query_pairs(payload: str) -> dict:
     '''
 
     pairs = {}
-    for pair_tuple in map(lambda pair: pair.split(':'), [pair for pair in payload.split(',')]):
-        pairs[normalize_query_string(pair_tuple[0])] = normalize_query_string(pair_tuple[1])
+    for pair_tuple in map(lambda pair: pair.split(':'), [pair for pair in re.split(r",+(?![^[]*\])", payload)]):
+        params = normalize_query_string(pair_tuple[1])
+        normalized_ops = normalize_op_params(pair_tuple[0], params)
+        if isinstance(normalized_ops, str):
+            pairs[normalize_query_string(pair_tuple[0])] = normalized_ops
+        else:
+            if '$and' not in pairs: 
+                pairs['$and'] = []
+            pairs['$and'].append(normalized_ops)
 
     return pairs
 
@@ -117,7 +142,7 @@ def parse_query_string(payload: str) -> dict:
             dict_payload[args[0]] = parse_query_params(args[1])
         else:
             dict_payload[args[0]] = normalize_query_string(args[1])
-        
+
     return dict_payload
 
 
