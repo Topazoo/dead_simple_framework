@@ -35,6 +35,7 @@ class SchemaHandler:
         if method in self.schema:
             method_schema = self.schema[method].copy()
             if 'redact' in method_schema: method_schema.pop('redact')
+            if 'filter' in request: request.update(request.pop('filter'))
 
             try:
                 validate(request, method_schema)
