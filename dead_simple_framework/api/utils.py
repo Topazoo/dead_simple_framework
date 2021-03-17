@@ -83,6 +83,11 @@ def normalize_op_params(field:str, op_string:str) -> dict:
             {field: param} for param in or_params
         ]}
 
+    if op_string.capitalize() == 'False':
+        return False
+    elif op_string.capitalize() == 'True':
+        return True
+
     return op_string
 
 
@@ -98,7 +103,7 @@ def parse_query_pairs(payload: str) -> dict:
     for pair_tuple in map(lambda pair: pair.split(':'), [pair for pair in re.split(r",+(?![^[]*\])", payload)]):
         params = normalize_query_string(pair_tuple[1])
         normalized_ops = normalize_op_params(pair_tuple[0], params)
-        if isinstance(normalized_ops, str):
+        if isinstance(normalized_ops, (str, bool)):
             pairs[normalize_query_string(pair_tuple[0])] = normalized_ops
         else:
             if '$and' not in pairs: 

@@ -36,6 +36,11 @@ class SchemaHandler:
             method_schema = self.schema[method].copy()
             if 'redact' in method_schema: method_schema.pop('redact')
             if 'filter' in request: request.update(request.pop('filter'))
+            for op in ['$and', '$or']:
+                if op in request:
+                    for chunk in request[op]:
+                        self.validate_request(route, method, chunk)
+                    return True
 
             try:
                 validate(request, method_schema)
