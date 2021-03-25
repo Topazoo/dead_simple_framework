@@ -73,7 +73,8 @@ class Application(Task_Manager):
         # Initialize inherited asynchronous task management ability
         super().__init__(dynamic_tasks=config.get('tasks'))
 
-        if Settings.APP_ENABLE_CORS: CORS(self.app)
+        # # TODO - Dynamic Resources
+        if Settings.APP_ENABLE_CORS: CORS(self.app, resources=r'/api/*', supports_credentials=True)
 
         Application._app = self
 
@@ -84,6 +85,10 @@ class Application(Task_Manager):
         self.app.config['JWT_SECRET_KEY'] = Settings.APP_JWT_KEY
         self.app.config['JWT_BLACKLIST_ENABLED'] = True if Settings.APP_USE_JWT else False
         self.app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+        
+        # TODO - Dynamic JWT Cookie setup
+        self.app.config['JWT_COOKIE_SAMESITE'] = 'None'
+        self.app.config['JWT_COOKIE_SECURE'] = True
         if Settings.APP_CSRF_PROTECT:
             self.app.config['JWT_COOKIE_CSRF_PROTECT'] = True
             self.app.config['JWT_CSRF_CHECK_FORM'] = True
