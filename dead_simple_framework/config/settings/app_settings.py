@@ -11,13 +11,13 @@ class App_Settings(Setting):
 
     # App Config
     APP_ENV = os.environ.get('APP_ENV', 'development')
-    APP_ENABLE_CORS = os.environ.get('APP_ENABLE_CORS', 'False') == 'True'
+    APP_ENABLE_CORS = os.environ.get('APP_ENABLE_CORS', 'False').capitalize() == 'True'
     APP_HOST = os.environ.get('APP_HOST', '0.0.0.0')
     APP_PORT = int(os.environ.get('APP_PORT', '5000'))
 
     APP_API_CLIENT_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-    APP_LOG_CONFIG = os.environ.get('APP_LOG_CONFIG', 'True') == 'True'
+    APP_LOG_CONFIG = os.environ.get('APP_LOG_CONFIG', 'True').capitalize() == 'True'
     APP_DEBUG_MODE = True
 
     def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, app_api_client_headers:dict=None, app_log_config:bool=None):

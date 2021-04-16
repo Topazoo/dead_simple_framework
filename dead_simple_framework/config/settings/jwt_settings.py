@@ -10,8 +10,8 @@ class JWT_Settings(Setting):
     CONFIG_TYPE = 'jwt_settings'
 
     # JWT Config
-    APP_USE_JWT = os.environ.get('APP_USE_JWT', 'False') == 'True'
-    APP_CSRF_PROTECT = os.environ.get('APP_CSRF_PROTECT', 'False') == 'True'
+    APP_USE_JWT = os.environ.get('APP_USE_JWT', 'False').capitalize() == 'True'
+    APP_CSRF_PROTECT = os.environ.get('APP_CSRF_PROTECT', 'False').capitalize() == 'True'
     APP_JWT_KEY = os.environ.get('APP_JWT_KEY', 'default')
     APP_JWT_LIFESPAN = os.environ.get('APP_JWT_LIFESPAN', 600)
     APP_PERMISSIONS = json.loads(os.environ.get('APP_PERMISSIONS', '["ADMIN", "USER"]'))
