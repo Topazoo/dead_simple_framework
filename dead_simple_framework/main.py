@@ -109,7 +109,7 @@ class Application(Task_Manager):
 
 
     def _setup_sentry(self):
-        if Settings.APP_USE_SENTRY and Settings.APP_SENTRY_HOST and Settings.APP_SENTRY_SLUG:
+        if Settings.USE_SENTRY and Settings.APP_SENTRY_HOST and Settings.APP_SENTRY_SLUG:
             sentry_sdk.init(f'https://{Settings.APP_SENTRY_HOST}.ingest.sentry.io/{Settings.APP_SENTRY_SLUG}', max_breadcrumbs=50, integrations=[FlaskIntegration()],)
 
 

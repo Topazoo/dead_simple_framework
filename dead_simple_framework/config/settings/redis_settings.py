@@ -38,15 +38,22 @@ class Redis_Settings(Setting):
     def get_log_data():
         ''' Returns a list of the settings to log to console '''
 
-        redis_online = Redis_Settings.check_redis_connection()
-        if Redis_Settings.USE_REDIS: conn_test = 'Connected to Redis :)' if redis_online else 'WARNING - Redis ping failed. Ensure the service is running and config is correct. Defaulting to in-memory cache'
-        else: conn_test = 'Redis is disabled via config, defaulting to in-memory cache'
-        return [
-            f'Redis host set to [{Redis_Settings.REDIS_HOST}]',
-            f'Redis port set to [{Redis_Settings.REDIS_PORT}]',
-            f'Redis default db set to [{Redis_Settings.REDIS_DB}]',
-            conn_test
-        ]
+        # If Redis is enabled
+        if Redis_Settings.USE_REDIS:
+            redis_online = Redis_Settings.check_redis_connection()
+            if Redis_Settings.USE_REDIS: 
+                conn_test = 'Connected to Redis :)' if redis_online else 'WARNING - Redis ping failed. Ensure the service is running and config is correct. Defaulting to in-memory cache'
+            else: 
+                conn_test = 'Redis is disabled via config, defaulting to in-memory cache'
+            
+            return [
+                f'Redis host set to [{Redis_Settings.REDIS_HOST}]',
+                f'Redis port set to [{Redis_Settings.REDIS_PORT}]',
+                f'Redis default db set to [{Redis_Settings.REDIS_DB}]',
+                conn_test
+            ]
+        
+        return [f'Redis caching disabled. Set `USE_REDIS` to True in environment to enable it']
 
     @staticmethod
     def check_redis_connection() -> bool:

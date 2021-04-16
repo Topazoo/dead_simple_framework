@@ -1,8 +1,9 @@
 # Flask HTTP
+from dead_simple_framework.slack import Slack
 from flask import request, Request, Response
 
 # App Settings
-from ..config import App_Settings
+from ..config import App_Settings, Sentry_Settings, Slack_Settings
 
 # API Errors
 from .errors import API_Error
@@ -306,15 +307,27 @@ class RouteHandler:
 
         # Catch errors handling API requests
         except API_Error as e:
-            # Log error to Sentry if it's enabled and the error is not a 404
-            if App_Settings.APP_USE_SENTRY and App_Settings.APP_SENTRY_HOST and App_Settings.APP_SENTRY_SLUG and e.code != 404:
-                capture_exception(e)
+            # If the error is not a 404
+            if e.code != 404:
 
+                # Log error to Sentry if it's enabled
+                if Sentry_Settings.USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
+                    capture_exception(e)
+
+                # Log error to Slack if it's enabled
+                if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
+                    Slack().log_api_exception(e, endpoint=request.url_rule, payload=payload)
+                
             return JsonError(e.message, e.code)
 
         except Exception as e:
+
             # Log error to Sentry if it's enabled
-            if App_Settings.APP_USE_SENTRY and App_Settings.APP_SENTRY_HOST and App_Settings.APP_SENTRY_SLUG:
+            if Sentry_Settings.USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
                 capture_exception(e)
+
+            # Log error to Slack if it's enabled
+            if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
+                Slack().log_exception(e, endpoint=request.url_rule, payload=payload)
 
             return JsonError({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, 500)

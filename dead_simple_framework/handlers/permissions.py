@@ -10,7 +10,7 @@ from .default import DefaultRouteHandler, RouteHandler
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 # Settings
-from ..config import App_Settings
+from ..config import JWT_Settings
 
 # Typing
 from typing import Callable
@@ -56,7 +56,7 @@ class PermissionsRouteHandler(RouteHandler):
             if isinstance(method_permissions, str):
                 method_permissions = [method_permissions]
                 
-            if method_permissions and App_Settings.APP_USE_JWT:
+            if method_permissions and JWT_Settings.APP_USE_JWT:
                 verify_jwt_in_request(optional=True)
                 identity = get_jwt_identity()
                 if identity and self.hasPermission(identity, method_permissions):

@@ -10,3 +10,4 @@ Flask-JWT-Extended==4.0.2
 passlib==1.7.4
 jsonschema==3.2.0
 sentry-sdk[flask]==1.0.0
+slack-sdk==3.4.2
