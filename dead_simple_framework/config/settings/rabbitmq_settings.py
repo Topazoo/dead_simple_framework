@@ -11,9 +11,9 @@ class RabbitMQ_Settings(Setting):
     CONFIG_TYPE = 'rabbitmq_settings'
 
     # RabbitMQ Config
-    USE_TASKS = os.environ.get('USE_TASKS', 'False') == 'True'
-    FORCE_START_RABBITMQ = os.environ.get('FORCE_START_RABBITMQ', 'False') == 'True'
-    FORCE_START_CELERY = os.environ.get('FORCE_START_CELERY', 'False') == 'True'
+    USE_TASKS = os.environ.get('USE_TASKS', 'False').capitalize() == 'True'
+    FORCE_START_RABBITMQ = os.environ.get('FORCE_START_RABBITMQ', 'False').capitalize() == 'True'
+    FORCE_START_CELERY = os.environ.get('FORCE_START_CELERY', 'False').capitalize() == 'True'
     RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', 'localhost')
     RABBITMQ_PORT = os.environ.get('RABBITMQ_PORT', '5672')
     RABBITMQ_USERNAME = os.environ.get('RABBITMQ_USERNAME', 'guest')

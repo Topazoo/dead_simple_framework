@@ -10,7 +10,7 @@ class Sentry_Settings(Setting):
     CONFIG_TYPE = 'sentry_settings'
 
     # Sentry Config
-    USE_SENTRY = os.environ.get('USE_SENTRY', 'True') == 'True'
+    USE_SENTRY = os.environ.get('USE_SENTRY', 'True').capitalize() == 'True'
     APP_SENTRY_HOST = os.environ.get('APP_SENTRY_HOST', '')
     APP_SENTRY_SLUG = os.environ.get('APP_SENTRY_SLUG', '')
 

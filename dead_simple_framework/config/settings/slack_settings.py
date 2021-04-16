@@ -10,7 +10,7 @@ class Slack_Settings(Setting):
     CONFIG_TYPE = 'slack_settings'
 
     # Slack Config
-    USE_SLACK = os.environ.get('USE_SLACK', 'False') == 'True'
+    USE_SLACK = os.environ.get('USE_SLACK', 'False').capitalize() == 'True'
     APP_SLACK_TOKEN = os.environ.get('APP_SLACK_TOKEN', '')
     APP_SLACK_LOGGING_CHANNEL = os.environ.get('APP_SLACK_LOGGING_CHANNEL', '#logging')
 
