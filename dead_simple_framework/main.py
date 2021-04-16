@@ -20,6 +20,10 @@ from .config.settings.main import Settings
 # JWT
 from .jwt import jwt
 
+# Sentry
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+
 # Utils
 import os
 
@@ -60,6 +64,9 @@ class Application(Task_Manager):
                 Index(field='token', order=-1)
             ], False)
 
+        # Add Sentry support
+        self._setup_sentry()
+
         # Register database indices
         self.indices.register_indices()
 
@@ -99,6 +106,11 @@ class Application(Task_Manager):
             self.app.config['JWT_COOKIE_CSRF_PROTECT'] = False
         
         jwt.init_app(self.app)
+
+
+    def _setup_sentry(self):
+        if Settings.APP_USE_SENTRY and Settings.APP_SENTRY_HOST and Settings.APP_SENTRY_SLUG:
+            sentry_sdk.init(f'https://{Settings.APP_SENTRY_HOST}.ingest.sentry.io/{Settings.APP_SENTRY_SLUG}', max_breadcrumbs=50, integrations=[FlaskIntegration()],)
 
 
     def run(self):

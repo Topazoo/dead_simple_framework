@@ -10,8 +10,8 @@ class Redis_Settings(Setting):
     CONFIG_TYPE = 'redis_settings'
 
     # Redis Config
-    USE_REDIS = os.environ.get('USE_REDIS', True)
-    FORCE_START_REDIS = os.environ.get('FORCE_START_REDIS', True)
+    USE_REDIS = os.environ.get('USE_REDIS', 'False') == 'True'
+    FORCE_START_REDIS = os.environ.get('FORCE_START_REDIS', 'False') == 'True'
     REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
     REDIS_PORT = os.environ.get('REDIS_PORT', 6379)
     REDIS_DB = os.environ.get('REDIS_DB', 0)
