@@ -311,11 +311,11 @@ class RouteHandler:
             if e.code != 404:
 
                 # Log error to Sentry if it's enabled
-                if Sentry_Settings.APP_USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
+                if Sentry_Settings.USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
                     capture_exception(e)
 
                 # Log error to Slack if it's enabled
-                if Slack_Settings.APP_USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
+                if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
                     Slack().log_api_exception(e, endpoint=request.url_rule, payload=payload)
                 
             return JsonError(e.message, e.code)
@@ -323,11 +323,11 @@ class RouteHandler:
         except Exception as e:
 
             # Log error to Sentry if it's enabled
-            if Sentry_Settings.APP_USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
+            if Sentry_Settings.USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
                 capture_exception(e)
 
             # Log error to Slack if it's enabled
-            if Slack_Settings.APP_USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
+            if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
                 Slack().log_exception(e, endpoint=request.url_rule, payload=payload)
 
             return JsonError({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, 500)

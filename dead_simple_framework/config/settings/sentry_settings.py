@@ -10,13 +10,13 @@ class Sentry_Settings(Setting):
     CONFIG_TYPE = 'sentry_settings'
 
     # Sentry Config
-    APP_USE_SENTRY = os.environ.get('APP_USE_SENTRY', 'True') == 'True'
+    USE_SENTRY = os.environ.get('USE_SENTRY', 'True') == 'True'
     APP_SENTRY_HOST = os.environ.get('APP_SENTRY_HOST', '')
     APP_SENTRY_SLUG = os.environ.get('APP_SENTRY_SLUG', '')
 
-    def __init__(self, app_use_sentry:bool=False, app_sentry_host:str=None, app_sentry_slug:str=None):
+    def __init__(self, use_sentry:bool=False, app_sentry_host:str=None, app_sentry_slug:str=None):
 
-        if app_use_sentry: Sentry_Settings.APP_USE_SENTRY = app_use_sentry
+        if use_sentry: Sentry_Settings.USE_SENTRY = use_sentry
         if app_sentry_host: Sentry_Settings.APP_SENTRY_HOST = app_sentry_host
         if app_sentry_slug: Sentry_Settings.APP_SENTRY_SLUG = app_sentry_slug
 
@@ -25,12 +25,14 @@ class Sentry_Settings(Setting):
         ''' Returns a list of the settings to log to console '''
 
         sentry_str = 'Sentry logging is disabled for application'
-        if Sentry_Settings.APP_USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
+        if Sentry_Settings.USE_SENTRY and Sentry_Settings.APP_SENTRY_HOST and Sentry_Settings.APP_SENTRY_SLUG:
             sentry_str = 'Sentry logging is enabled for application'
-        elif Sentry_Settings.APP_USE_SENTRY:
+        elif Sentry_Settings.USE_SENTRY:
             if not Sentry_Settings.APP_SENTRY_HOST:
-                sentry_str += ' (no APP_SENTRY_HOST set!)'
+                sentry_str += ' (set the `APP_SENTRY_HOST` environmental variable to enable it)'
             if not Sentry_Settings.APP_SENTRY_SLUG:
-                sentry_str += ' (no APP_SENTRY_SLUG set!)'
+                sentry_str += ' (set the `APP_SENTRY_SLUG` environmental variable to enable it)'
+        elif not Sentry_Settings.USE_SENTRY:
+            sentry_str += '. Set `USE_SENTRY` to True in environment to enable it' 
 
         return [sentry_str]

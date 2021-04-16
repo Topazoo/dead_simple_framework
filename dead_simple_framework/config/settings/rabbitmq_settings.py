@@ -50,19 +50,21 @@ class RabbitMQ_Settings(Setting):
     def get_log_data():
         ''' Returns a list of the settings to log to console '''
 
-        rabbitmq_online = RabbitMQ_Settings.check_rabbitmq_connection()
-        if RabbitMQ_Settings.USE_TASKS: rabbit_conn_test = 'Connected to RabbitMQ :)' if rabbitmq_online else 'WARNING - RabbitMQ ping failed. Ensure the service is running and config is correct. Defaulting to mutliprocess task engine'
-        else: rabbit_conn_test = 'RabbitMQ is disabled via config, defaulting to multiprocess task engine'
-       
-        #celery_online = RabbitMQ_Settings.check_rabbitmq_connection()
-        #if RabbitMQ_Settings.USE_TASKS: celery_conn_test = 'Connected to Celery :)' if celery_online else 'WARNING - Celery ping failed. Ensure the service is running and config is correct. Defaulting to mutliprocess task engine'
-        #else: celery_conn_test = 'Celery is disabled via config, defaulting to multiprocess task engine'
+        # If RabbbitMQ is enabled for tasks
+        if RabbitMQ_Settings.USE_TASKS:
+            rabbitmq_online = RabbitMQ_Settings.check_rabbitmq_connection()
+            if RabbitMQ_Settings.USE_TASKS: 
+                rabbit_conn_test = 'Connected to RabbitMQ :)' if rabbitmq_online else 'WARNING - RabbitMQ ping failed. Ensure the service is running and config is correct. Defaulting to mutliprocess task engine'
+            else: 
+                rabbit_conn_test = 'RabbitMQ is disabled via config, defaulting to multiprocess task engine'
+        
+            return [
+                f'RabbitMQ connection string set to [{RabbitMQ_Settings.RABBITMQ_CONNECTION_STRING}]',
+                rabbit_conn_test
+            ]
+        
+        return [f'RabbitMQ task engine disabled. Set `USE_TASKS` to True in environment to enable it']
 
-        return [
-            f'RabbitMQ connection string set to [{RabbitMQ_Settings.RABBITMQ_CONNECTION_STRING}]',
-            rabbit_conn_test,
-            #celery_conn_test
-        ]
 
     @staticmethod
     def check_rabbitmq_connection() -> bool:

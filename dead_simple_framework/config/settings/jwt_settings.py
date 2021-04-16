@@ -30,7 +30,7 @@ class JWT_Settings(Setting):
         ''' Returns a list of the settings to log to console '''
 
         return [
-            f'JSON Web Token verfication is {"enabled" if JWT_Settings.APP_USE_JWT else "disabled"}.' +\
-            f'The current key is {"*unsafe* and should be changed" if JWT_Settings.APP_JWT_KEY == "default" else "safe"}. The current token lifespan is {JWT_Settings.APP_JWT_LIFESPAN} seconds' if JWT_Settings.APP_USE_JWT else '',
-            f'CSRF protection is currently {"enabled" if JWT_Settings.APP_CSRF_PROTECT else "disabled"}.',
+            f'JSON Web Token verfication is {"enabled" if JWT_Settings.APP_USE_JWT else "disabled. Set `APP_USE_JWT` to True in environment to enable it"}',
+            f'The current JWT key is {"*unsafe* and should be changed" if JWT_Settings.APP_JWT_KEY == "default" else "safe"}. The current token lifespan is {JWT_Settings.APP_JWT_LIFESPAN} seconds' if JWT_Settings.APP_USE_JWT else '',
+            f'CSRF protection is currently {"enabled" if JWT_Settings.APP_CSRF_PROTECT else "disabled. Set `APP_CSRF_PROTECT` to True in environment to enable it"}',
         ]

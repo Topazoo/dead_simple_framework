@@ -16,7 +16,7 @@ from dead_simple_framework.api.errors import API_Error
 class Slack:
     ''' Client for sending Slack messages '''
 
-    def __init__(self, token:str=None, default_channel:str='#logging-test') -> None:
+    def __init__(self, token:str=None, default_channel:str=None):
 
         # Rely on system token if one wasn't passed
         if not token:
@@ -26,7 +26,7 @@ class Slack:
         self._client = WebClient(token=token)
 
         # Set the default channel
-        self.default_channel = default_channel
+        self.default_channel = Slack_Settings.APP_SLACK_LOGGING_CHANNEL if not default_channel else default_channel
 
 
     def send_message(self, message:str, channel:str=None, thread_id:str=None) -> str:
