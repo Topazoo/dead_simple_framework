@@ -21,6 +21,7 @@ from typing import Callable, Dict
 from pymongo.collection import Collection
 
 # Exceptions
+from sentry_sdk import capture_exception
 import traceback
 
 
@@ -303,7 +304,17 @@ class RouteHandler:
             response = logic(request, payload)
             return route.schema_handler.redact_response(request.method, JsonResponse(response) if not isinstance(response, Response) else response)
 
+        # Catch errors handling API requests
         except API_Error as e:
+            # Log error to Sentry if it's enabled and the error is not a 404
+            if App_Settings.APP_USE_SENTRY and App_Settings.APP_SENTRY_HOST and App_Settings.APP_SENTRY_SLUG and e.code != 404:
+                capture_exception(e)
+
             return JsonError(e.message, e.code)
+
         except Exception as e:
+            # Log error to Sentry if it's enabled
+            if App_Settings.APP_USE_SENTRY and App_Settings.APP_SENTRY_HOST and App_Settings.APP_SENTRY_SLUG:
+                capture_exception(e)
+
             return JsonError({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, 500)

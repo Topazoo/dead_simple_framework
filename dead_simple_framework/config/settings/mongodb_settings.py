@@ -10,7 +10,7 @@ class MongoDB_Settings(Setting):
     CONFIG_TYPE = 'mongodb_settings'
 
     # MongoDB Config
-    MONGODB_ATLAS = os.environ.get('MONGODB_ATLAS', False)
+    MONGODB_ATLAS = os.environ.get('MONGODB_ATLAS', 'False') == 'True'
     MONGODB_HOST = os.environ.get('MONGODB_HOST', 'localhost')
     MONGODB_PORT = os.environ.get('MONGODB_PORT', 27017)
     MONGODB_USERNAME = os.environ.get('MONGODB_USERNAME', '')
@@ -21,7 +21,7 @@ class MongoDB_Settings(Setting):
     MONGODB_DATA_PATH = os.environ.get('MONGODB_DATA_PATH', os.path.expanduser('~/data/db'))
     MONGODB_LOG_PATH = os.environ.get('MONGODB_LOG_PATH', os.path.expanduser('/tmp/mongo.log'))
     MONGODB_INSTALLATION_PATH = os.environ.get('RABBITMQ_INSTALLATION_PATH', '/usr/local/bin/mongod')
-    FORCE_START_MONGODB = os.environ.get('FORCE_START_MONGODB', True)
+    FORCE_START_MONGODB = os.environ.get('FORCE_START_MONGODB', 'True') == 'True'
 
     def __init__(self, mongodb_atlas:bool=None, mongodb_host:str=None, mongodb_port:str=None, mongodb_username:str=None,
                     mongodb_password:str=None, mongodb_default_db:str=None, mongodb_default_collection:str=None,
