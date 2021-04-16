@@ -56,7 +56,7 @@ class Application(Task_Manager):
         if Settings.APP_USE_JWT:
             self._setup_jwt()
             self.indices.add_indices('_jwt_tokens', [
-                Index(field='modified_on', order=-1, properties={'expireAfterSeconds': Settings.APP_JWT_LIFESPAN}),
+                Index(field='modified_on', order=-1, properties={'expireAfterSeconds': int(Settings.APP_JWT_LIFESPAN or 600)}),
                 Index(field='token', order=-1)
             ], False)
 
