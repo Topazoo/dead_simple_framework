@@ -25,7 +25,7 @@ from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
 
 # Settings
-from ..config.settings import App_Settings
+from ..config.settings import JWT_Settings
 
 
 class UserRouteHandler(DefaultPermissionsRouteHandler):
@@ -47,7 +47,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
         ''' Ensure users can only operate on their account '''
 
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
-        if method != 'POST' and App_Settings.APP_USE_JWT:
+        if method != 'POST' and JWT_Settings.APP_USE_JWT:
             if identity and 'ADMIN' in identity.get('permissions', []): 
                 return True
 

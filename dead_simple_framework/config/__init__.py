@@ -4,3 +4,6 @@ from .settings.app_settings import App_Settings
 from .settings.rabbitmq_settings import RabbitMQ_Settings
 from .settings.redis_settings import Redis_Settings
 from .settings.mongodb_settings import MongoDB_Settings
+from .settings.slack_settings import Slack_Settings
+from .settings.jwt_settings import JWT_Settings
+from .settings.sentry_settings import Sentry_Settings
