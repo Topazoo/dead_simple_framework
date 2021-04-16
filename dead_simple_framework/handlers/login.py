@@ -81,11 +81,8 @@ class LoginRouteHandler(PermissionsRouteHandler):
         
         identity = {'username': user['username'], '_id': str(user['_id']), 'permissions': permissions}
         access_token, refresh_token = cls.update_stored_token(identity)
-        response = JsonResponse({
-            '_id': str(user['_id']),
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        })
+        
+        response = JsonResponse({'_id': str(user['_id'])})
 
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)
@@ -101,10 +98,8 @@ class LoginRouteHandler(PermissionsRouteHandler):
             return JsonError('Could not refresh access token, failed to validate refresh token')
 
         access_token, refresh_token = cls.update_stored_token(identity)
-        response = JsonResponse({
-            'access_token': access_token,
-            'refresh_token': refresh_token
-        })
+        
+        response = JsonResponse({'success': True})
 
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)

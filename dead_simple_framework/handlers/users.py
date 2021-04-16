@@ -49,7 +49,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
         if 'password' in payload: payload['password'] = sha256.hash(payload.get('password'))
         if method != 'POST' and App_Settings.APP_USE_JWT:
             if identity and 'ADMIN' in identity.get('permissions', []): 
-                return True # TODO - Dynamic admin
+                return True
 
             _id = payload.get('_id')
             if 'filter' in payload and not _id:
@@ -83,14 +83,11 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
             identity = {'username': payload.get('username'), '_id': str(_id), 'permissions': payload['permissions']}
             access_token, refresh_token = LoginRouteHandler.update_stored_token(identity)
 
-            response = JsonResponse({
-                '_id': _id,
-                'access_token': access_token,
-                'refresh_token': refresh_token
-            })
+            response = JsonResponse({'_id': _id})
 
             set_access_cookies(response, access_token)
             set_refresh_cookies(response, refresh_token)
+
             return response
 
         except OperationFailure as e:
