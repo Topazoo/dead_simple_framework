@@ -98,7 +98,7 @@ class Application(Task_Manager):
         
         # TODO - Dynamic JWT Cookie setup
         self.app.config['JWT_COOKIE_SAMESITE'] = os.environ.get('JWT_COOKIE_SAMESITE', 'None')
-        self.app.config['JWT_COOKIE_SECURE'] = os.environ.get('JWT_COOKIE_SECURE', 'true') == 'true'
+        self.app.config['JWT_COOKIE_SECURE'] = os.environ.get('JWT_COOKIE_SECURE', 'false') == 'true'
         if Settings.APP_CSRF_PROTECT:
             self.app.config['JWT_COOKIE_CSRF_PROTECT'] = True
             self.app.config['JWT_CSRF_CHECK_FORM'] = True

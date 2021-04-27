@@ -40,19 +40,24 @@ class Slack:
         if channel[0] != '#':
             channel = f'#{channel}'
 
-        # Send the message to the channel
-        response = self._client.api_call(
-            api_method='chat.postMessage',
-            json={'channel': channel,'text': message, **({} if not thread_id else {'thread_ts': thread_id})},
-        )
+        try:
+            # Send the message to the channel
+            response = self._client.api_call(
+                api_method='chat.postMessage',
+                json={'channel': channel,'text': message, **({} if not thread_id else {'thread_ts': thread_id})},
+            )
 
-        # Log errors
-        if not response or 'error' in response:
-            capture_exception(Exception(f"Slack logging error: {response['error']}"))
-            return None
+            # Log errors
+            if not response or 'error' in response:
+                capture_exception(Exception(f"Slack logging error: {response['error']}"))
+                return None
 
-        # Return the thread ID
-        return response.get('ts')
+            # Return the thread ID
+            return response.get('ts')
+
+        # Catch and log any exceptions thrown when logging
+        except Exception as e:
+            capture_exception(e)
 
 
     def log_api_exception(self, error:API_Error, endpoint:str, payload:dict, channel:str=None, thread_title:str=None):
