@@ -23,7 +23,7 @@ from pymongo.collection import Collection
 
 # Exceptions
 from sentry_sdk import capture_exception
-import traceback
+import traceback, logging
 
 
 class RouteHandler:
@@ -317,6 +317,9 @@ class RouteHandler:
                 # Log error to Slack if it's enabled
                 if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
                     Slack().log_api_exception(e, endpoint=request.url_rule, payload=payload)
+
+                # Log error standard out
+                logging.critical(f'API_Error: {e}')
                 
             return JsonError(e.message, e.code)
 
@@ -329,5 +332,8 @@ class RouteHandler:
             # Log error to Slack if it's enabled
             if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
                 Slack().log_exception(e, endpoint=request.url_rule, payload=payload)
+
+            # Log error to standard out
+            logging.critical(f'{type(e).__name__}: {e}')
 
             return JsonError({'error': str(e), 'traceback': str(traceback.format_exc()), 'code': 500}, 500)

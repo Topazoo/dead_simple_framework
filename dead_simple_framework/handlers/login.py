@@ -14,9 +14,12 @@ from flask_jwt_extended import create_access_token, create_refresh_token, get_jw
                                 decode_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies
 from ..jwt import jwt
 
+# JWT Settings
+from ..config import JWT_Settings
+
 # Utils
 from ..api.utils import JsonError, JsonResponse, update_data, delete_data
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Flask HTTP
 from flask import Request, Response
@@ -82,7 +85,10 @@ class LoginRouteHandler(PermissionsRouteHandler):
         identity = {'username': user['username'], '_id': str(user['_id']), 'permissions': permissions}
         access_token, refresh_token = cls.update_stored_token(identity)
         
-        response = JsonResponse({'_id': str(user['_id'])})
+        response = JsonResponse({
+            '_id': str(user['_id']),
+            'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
+        })
 
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)
@@ -99,7 +105,10 @@ class LoginRouteHandler(PermissionsRouteHandler):
 
         access_token, refresh_token = cls.update_stored_token(identity)
         
-        response = JsonResponse({'success': True})
+        response = JsonResponse({
+            'success': True,
+            'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
+        })
 
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)

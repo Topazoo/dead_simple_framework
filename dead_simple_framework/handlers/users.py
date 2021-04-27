@@ -20,6 +20,9 @@ from ..api.utils import JsonError, JsonException, JsonResponse, delete_data, ins
 # Flask HTTP
 from flask import Request, Response
 
+# Utils
+from datetime import datetime, timedelta
+
 # Typing
 from pymongo.collection import Collection
 from pymongo.errors import OperationFailure
@@ -83,7 +86,10 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
             identity = {'username': payload.get('username'), '_id': str(_id), 'permissions': payload['permissions']}
             access_token, refresh_token = LoginRouteHandler.update_stored_token(identity)
 
-            response = JsonResponse({'_id': _id})
+            response = JsonResponse({
+                '_id': _id,
+                'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
+            })
 
             set_access_cookies(response, access_token)
             set_refresh_cookies(response, refresh_token)
