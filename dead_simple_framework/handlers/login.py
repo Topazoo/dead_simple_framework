@@ -87,6 +87,7 @@ class LoginRouteHandler(PermissionsRouteHandler):
         
         response = JsonResponse({
             '_id': str(user['_id']),
+            'permissions': permissions,
             'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
         })
 
@@ -107,6 +108,7 @@ class LoginRouteHandler(PermissionsRouteHandler):
         
         response = JsonResponse({
             'success': True,
+            'permissions': identity['permissions'],
             'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
         })
 

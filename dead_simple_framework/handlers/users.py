@@ -88,6 +88,7 @@ class UserRouteHandler(DefaultPermissionsRouteHandler):
 
             response = JsonResponse({
                 '_id': _id,
+                'permissions': payload['permissions'],
                 'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
             })
 
