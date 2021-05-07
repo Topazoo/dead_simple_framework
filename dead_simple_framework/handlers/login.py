@@ -107,7 +107,7 @@ class LoginRouteHandler(PermissionsRouteHandler):
         access_token, refresh_token = cls.update_stored_token(identity)
         
         response = JsonResponse({
-            'success': True,
+            '_id': str(identity['_id']),
             'permissions': identity['permissions'],
             'session_expires': datetime.now() + timedelta(seconds=int(JWT_Settings.APP_JWT_LIFESPAN))
         })
