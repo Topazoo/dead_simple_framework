@@ -273,6 +273,7 @@ class RouteHandler:
             <-- JSON containing the HTTP status code signifying the request's success or failure and
                 all other data returned from the server.
         '''
+        payload = None
         try:
             # Get the configuration for the route that was accessed
             route = cls.ROUTES[str(request.url_rule)]
@@ -316,7 +317,7 @@ class RouteHandler:
 
                 # Log error to Slack if it's enabled
                 if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
-                    Slack().log_api_exception(e, endpoint=request.url_rule, payload=payload)
+                    Slack().log_api_exception(e, endpoint=request.url_rule, payload=payload or {})
 
                 # Log error standard out
                 logging.critical(f'API_Error: {e}')
@@ -331,7 +332,7 @@ class RouteHandler:
 
             # Log error to Slack if it's enabled
             if Slack_Settings.USE_SLACK and Slack_Settings.APP_SLACK_TOKEN:
-                Slack().log_exception(e, endpoint=request.url_rule, payload=payload)
+                Slack().log_exception(e, endpoint=request.url_rule, payload=payload or {})
 
             # Log error to standard out
             logging.critical(f'{type(e).__name__}: {e}')
