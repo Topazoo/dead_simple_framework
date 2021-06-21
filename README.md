@@ -8,7 +8,7 @@
 
 ## Overview:
 
-A RESTful Flask framework with MongoDB, Redis and Celery integrations:
+A RESTful Flask framework with MongoDB, Redis, Celery, Slack and Sentry integrations:
 
 Backend:
 
@@ -16,6 +16,7 @@ Backend:
 - MongoDB [Database]
 - Redis [Cache]
 - Celery + RabbitMQ [Async Tasks]
+- Slack + Sentry [Logging]
 
 ## Installing:
 
@@ -30,99 +31,112 @@ TODO - DOCS
 
 ## Example Application (`demo.py`):
 
-\* Celery must be running *
-```sh
-$ celery -A demo worker -l info
-```
 
 ```python
-from dead_simple_framework import Application, Task_Manager, Database, API, Route, RouteHandler, DefaultRouteHandler, Task
-from random import choice
+from dead_simple_framework import Route, RouteHandler, Application
+from dead_simple_framework.handlers import UserRouteHandler, LoginRouteHandler, Permissions, DefaultPermissionsRouteHandler
+from dead_simple_framework.database import Indices
+from dead_simple_framework.api.errors import API_Error
+from dead_simple_framework.api.utils import JsonError
 
+# Method that throws a sample error
+def throw(msg): raise API_Error(msg, 400)
+
+# App config for a simple blog application with user accounts
 sample_config = {
     'routes': {
-        'insert': Route( # A route with automatic CRUD support
-            url='/insert',
-            collection='insert',
+        # Users
+        'users': Route(
+            # Route with a built-in handler for creating, updating, fetching and deleting users
+            # Only authenticated users can perform certain operations.
+            # Adding a `verifier` to the class will let you allow only a specific user to update 
+            # their data or delete their account.
+            url = '/api/users',
+            handler=UserRouteHandler(permissions=Permissions(
+                PUT='USER', PATCH='USER', GET='USER', DELETE='USER'
+            )),
+            # The schema controls what data can be passed to the endpoint
+            # In this case, a user ObjectId is required and the only property
+            # supported. 
+            schema={
+                'GET': {
+                    'type': 'object',
+                    'properties': {
+                        '_id': {'type': 'string'}
+                    },
+                    'required': ['_id']
+                }
+            },
+            # The MongoDB collection where data for this route should be stored
+            # It is passed to any overloaded method handlers (e.g. a custom GET method)
+            collection='users'
         ),
-        'demo': Route( # Another route with automatic CRUD support (with all options specified)
-            url='/demo',                    # The URL at which the server should handle requests
-            defaults=None,                  # Default parameters to pass to the handler function for this URL
-            database='db',                  # The database that should be passed to the handler function for this URL 
-            collection='demo',              # The collection that should be passed to the handler function for this URL 
-            handler=DefaultRouteHandler()   # A class specifying the handler functions to use based on the method used to access the URL 
+
+        # Authentication
+        'authentication': Route(
+            # Route with a built-in handler for authenticating users and issuing a JSON Web Token
+            url='/api/authenticate', 
+            handler=LoginRouteHandler(),
+            # It relies on the same collection as the core `users` route
+            collection='users'
         ),
-        'refresh': Route(  # Route with a handler for the GET method that runs an async task (in this case an API call)
-            url='/api/refresh',
+
+        # Posts
+        'posts': Route(
+            # Route with a builtin generic CRUD handler for creating, updating, fetching and deleting posts
+            # Only authenticated users can perform certain operations.
+            url='/api/posts',
+            handler=DefaultPermissionsRouteHandler(permissions=Permissions(POST=['USER'], PUT=['USER'], PATCH=['USER'], DELETE=['USER'])),
+            collection='posts'
+        ),
+
+        # Sample Error
+        'error': Route(
+            # Route that demonstrates built-in error handling
+            url='/error',
             handler=RouteHandler(
-                GET=lambda request, payload: str(Task_Manager.run_task('scheduled_call'))
-            )
-        ),
-        'index': Route(  # Route that fetches the cached latest result of an async task (in this case an API call)
-            url='/',
-            handler=RouteHandler(
-                GET=lambda request, payload: str(Task_Manager.get_result('scheduled_call'))
-            )
-        ),
-        'add': Route(  # Route that runs an async task (in this case simple addition) and fetches the result
-            url='/add',
-            handler=RouteHandler(
-                GET=lambda request, payload: str(Task_Manager.run_task('add'))
+                # Custom handlers allow a POST request or a GET request to create different errors
+                POST=lambda request, payload: throw(f'POST - Error from payload {payload}'),
+                GET=lambda request, payload: JsonError('This is a GET error', code=500),
             )
         ),
     },
 
-    'tasks': { # Async tasks available to the Task_Manager [celery] to schedule or run
-        'add': {        # Simple Addition Task (with default arguments) 
-            'logic': lambda x,y: x + y,
-            'schedule': None,
-            'default_args': (2,2)
+    # Application settings
+    'settings': {
+        # JWT Settings determine if the app uses JWT, what the token lifespan will be and more
+        'jwt_settings': {
+            'app_use_jwt': True,
+            'app_jwt_lifespan': 600,
+            'app_permissions': ['USER', 'ADMIN'],
+        }
+    },
+
+    # MongoDB indices for each collection used by the application
+    'indices': Indices({
+        'users': {
+            'username': {
+                'order': -1
+            },
+            'password': {
+                'order': 1,
+                'compound_with': 'username'
+            }
         },
-        'insert': {     # Periodic Database Insert Task 
-            'logic': lambda res: Database(collection='insert').connect().insert_one({'test': 'doc', 'result': res}),
-            'schedule': {}, # Default - every minute
-            'depends_on': 'add' # Return value substituted for `res`
-        },
-        'call_api': {   # API Call Task
-            'logic': lambda url, params=None: str(API.get(url, params, ignore_errors=False, retry_ms=10000, num_retries=20).content),
-        },
-        'scheduled_call': Task( # Make 3 parallel API calls
-            name='scheduled_call',
-            logic=lambda: Task_Manager.parallelize([['call_api', [x]] for x in get_websites(3)]),
-            schedule={}
-        )
-    }
+    })
 }
 
-
-WEBSITES =[
-    "http://www.google.com",
-    "http://www.yahoo.com",
-    "http://www.ebay.com",
-    "http://www.cnn.com",
-    "http://www.pbs.org",
-    "https://www.reddit.com/",
-]
-
-def get_websites(n):
-    _websites = [*WEBSITES]
-    res = []
-    for x in range(n):
-        res.append(choice(_websites))
-        _websites.remove(res[-1])
-
-    return res
-
-
-app = Application(sample_config)
 if __name__ == '__main__':
-    app.run()
+    Application(sample_config).run()
 ```
 
 - Starts a local server at http://0.0.0.0:5000/
 
-- Serves CRUD operations for MongoDB collection `demo` at endpoint `/demo`
+- Serves CRUD operations for MongoDB users collection `users` at endpoint `/api/users`
 
-- Runs an asynchronous chained value calculation and insert into the `insert` collection (viewable at `/insert`)
+- Issues JWT tokents for created users at endpoint `/api/authenticate`
 
-- Runs asynchronous parallel API calls and displays the latest result at endpoint `/` (can be manually run at `/api/refresh`)
+- Serves CRUD operations for MongoDB collection `posts` at endpoint `/api/posts`
+
+- Demos errors at endpoint `/error`
+
