@@ -173,10 +173,12 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
 
     mongo_filter = request_params.get('filter') or request_params
     if '_id' in mongo_filter: mongo_filter['_id'] = ObjectId(mongo_filter['_id'])
+    if 'after_id' in mongo_filter: mongo_filter['_id'] = {'$gt': ObjectId(mongo_filter.pop('after_id'))}
     if request_params.get('sort'):
         [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
 
-    res = collection.find(mongo_filter)
+    limit = int(mongo_filter.pop('num_results', 0))
+    res = collection.find(mongo_filter).limit(limit)
     return list(res) if not lazy else res
     
 
