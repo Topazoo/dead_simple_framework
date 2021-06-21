@@ -174,6 +174,12 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
     mongo_filter = request_params.get('filter') or request_params
     if '_id' in mongo_filter: mongo_filter['_id'] = ObjectId(mongo_filter['_id'])
     if 'after_id' in mongo_filter: mongo_filter['_id'] = {'$gt': ObjectId(mongo_filter.pop('after_id'))}
+    if 'before_id' in mongo_filter: 
+        op = {'$lt': ObjectId(mongo_filter.pop('before_id'))}
+        if '_id' in mongo_filter:
+            mongo_filter['_id'].update(op)
+        mongo_filter['_id'] = op
+
     if request_params.get('sort'):
         [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
 
