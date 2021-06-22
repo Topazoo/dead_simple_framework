@@ -126,9 +126,13 @@ class RouteHandler:
             # Use the query string to send a database query
             data_cursor = fetch_and_filter_data(payload, collection, lazy=True)
             # Sort the data if one was specified in the query string
-            sorted_data = list(sort_data(data_cursor, payload))
+            sorted_data = sort_data(data_cursor, payload)
+            # Limit the data if a limit was specified in the payload
+            limited_data = limit_data(sorted_data, payload)
 
-            return JsonResponse({'data': sorted_data}, 200 if len(sorted_data) > 0 else 404)
+            data = list(limited_data)
+            
+            return JsonResponse({'data': data}, 200 if len(data) > 0 else 404)
             
         except API_Error as e:
             return JsonException('GET', e)

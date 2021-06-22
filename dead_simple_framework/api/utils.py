@@ -144,7 +144,7 @@ def parse_query_string(payload: str) -> dict:
         if args[0] == 'filter':
             dict_payload[args[0]] = parse_query_pairs(args[1])
         elif args[0] == 'sort':
-            dict_payload[args[0]] = parse_query_params(args[1])
+            dict_payload[args[0]] = parse_query_pairs(args[1])
         else:
             dict_payload[args[0]] = normalize_query_string(args[1])
 
@@ -171,6 +171,9 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
 
     if not collection: raise API_Error('No collection was specified to get data from for this route! Check your Route configuration', 500)
 
+    request_params = request_params.copy()
+    request_params.pop('limit', None)
+
     mongo_filter = request_params.get('filter') or request_params
     if '_id' in mongo_filter: mongo_filter['_id'] = ObjectId(mongo_filter['_id'])
     if 'after_id' in mongo_filter: mongo_filter['_id'] = {'$gt': ObjectId(mongo_filter.pop('after_id'))}
@@ -181,10 +184,9 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
         mongo_filter['_id'] = op
 
     if request_params.get('sort'):
-        [mongo_filter.update({s[0]: {'$exists': True}}) for s in request_params.get('sort')]
+        [mongo_filter.update({s: {'$exists': True}}) for s in request_params.pop('sort').keys()]
 
-    limit = int(mongo_filter.pop('num_results', 0))
-    res = collection.find(mongo_filter).limit(limit)
+    res = collection.find(mongo_filter)
     return list(res) if not lazy else res
     
 
@@ -197,8 +199,22 @@ def sort_data(data: Cursor, request_params: dict) -> list:
 
     mongo_sort = request_params.get('sort', {})
     if mongo_sort != {}:
-        return data.sort(mongo_sort)
+        return data.sort([(x, int(y)) for x,y in mongo_sort.items()])
     
+    return data
+
+
+def limit_data(data: Cursor, request_params: dict) -> list:
+    ''' Limits the number of results in a response based on the parameters sent in an HTTP request.
+        --> data : The cursor of data to apply the limit to.
+        --> request_params : The parameters sent with the request (in querystring or body).
+        <-- A queryset containing the limited data.
+    '''
+
+    mongo_limit = int(request_params.get('limit', 0))
+    if mongo_limit:
+        return data.limit(mongo_limit)
+
     return data
 
 
