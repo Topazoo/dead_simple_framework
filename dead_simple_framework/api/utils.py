@@ -181,10 +181,11 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
         op = {'$lt': ObjectId(mongo_filter.pop('before_id'))}
         if '_id' in mongo_filter:
             mongo_filter['_id'].update(op)
-        mongo_filter['_id'] = op
+        else:
+            mongo_filter['_id'] = op
 
     if request_params.get('sort'):
-        [mongo_filter.update({s: {'$exists': True}}) for s in request_params.pop('sort').keys()]
+        [mongo_filter.update({s: {'$exists': True}}) for s in request_params.pop('sort').keys() if s != '_id']
 
     res = collection.find(mongo_filter)
     return list(res) if not lazy else res

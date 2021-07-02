@@ -73,7 +73,10 @@ sample_config = {
         'jwt_settings': {
             'app_use_jwt': True,
             'app_jwt_lifespan': 600,
-            'app_permissions': ['USER', 'ADMIN'],
+            'app_permissions': ['USER', 'ADMIN']
+        },
+        'app_settings': {
+            'app_enable_cors': True
         }
     },
 
