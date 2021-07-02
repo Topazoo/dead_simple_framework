@@ -187,7 +187,6 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
     if request_params.get('sort'):
         [mongo_filter.update({s: {'$exists': True}}) for s in request_params.pop('sort').keys() if s != '_id']
 
-    print(mongo_filter)
     res = collection.find(mongo_filter)
     return list(res) if not lazy else res
     
