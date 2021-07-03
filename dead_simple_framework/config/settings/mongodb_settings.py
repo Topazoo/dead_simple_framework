@@ -18,6 +18,7 @@ class MongoDB_Settings(Setting):
     MONGODB_DEFAULT_DB = os.environ.get('MONGODB_DEFAULT_DB', 'db')
     MONGODB_DEFAULT_COLLECTION = os.environ.get('MONGODB_DEFAULT_COLLECTION', 'data')
     MONGODB_CONNECTION_STRING = os.environ.get('MONGODB_CONNECTION_STRING')
+    MONGODB_CONN_TIMEOUT = int(os.environ.get('MONGODB_CONN_TIMEOUT', 600))
     MONGODB_DATA_PATH = os.environ.get('MONGODB_DATA_PATH', os.path.expanduser('~/data/db'))
     MONGODB_LOG_PATH = os.environ.get('MONGODB_LOG_PATH', os.path.expanduser('/tmp/mongo.log'))
     MONGODB_INSTALLATION_PATH = os.environ.get('RABBITMQ_INSTALLATION_PATH', '/usr/local/bin/mongod')
@@ -26,7 +27,7 @@ class MongoDB_Settings(Setting):
     def __init__(self, mongodb_atlas:bool=None, mongodb_host:str=None, mongodb_port:str=None, mongodb_username:str=None,
                     mongodb_password:str=None, mongodb_default_db:str=None, mongodb_default_collection:str=None,
                     mongodb_connection_string:str=None, mongodb_data_path:str=None, mongodb_log_path:str=None, 
-                    force_start_mongodb:bool=None, mongodb_installation_path:str=None):
+                    force_start_mongodb:bool=None, mongodb_installation_path:str=None, mongodb_conn_timeout:int=None):
 
         if mongodb_atlas: MongoDB_Settings.MONGODB_ATLAS = mongodb_atlas
         if mongodb_host: MongoDB_Settings.MONGODB_HOST = mongodb_host
@@ -39,6 +40,7 @@ class MongoDB_Settings(Setting):
         if mongodb_log_path: MongoDB_Settings.MONGODB_LOG_PATH = mongodb_log_path
         if mongodb_installation_path: MongoDB_Settings.MONGODB_INSTALLATION_PATH = mongodb_installation_path
         if force_start_mongodb: MongoDB_Settings.FORCE_START_MONGODB = force_start_mongodb
+        if mongodb_conn_timeout: MongoDB_Settings.MONGODB_CONN_TIMEOUT =mongodb_conn_timeout
         if mongodb_connection_string: 
             MongoDB_Settings.MONGODB_CONNECTION_STRING = mongodb_connection_string
         else:
@@ -79,9 +81,9 @@ class MongoDB_Settings(Setting):
 
         try: # Determine if MongoDB is online
             if not MongoDB_Settings.MONGODB_ATLAS:
-                return True if pymongo.MongoClient(host=MongoDB_Settings.MONGODB_CONNECTION_STRING, port=MongoDB_Settings.MONGODB_PORT, serverSelectionTimeoutMS=10).server_info() else False
+                return True if pymongo.MongoClient(host=MongoDB_Settings.MONGODB_CONNECTION_STRING, port=MongoDB_Settings.MONGODB_PORT, serverSelectionTimeoutMS=MongoDB_Settings.MONGODB_CONN_TIMEOUT).server_info() else False
             else:
-                return True if pymongo.MongoClient(MongoDB_Settings.MONGODB_CONNECTION_STRING, serverSelectionTimeoutMS=300).server_info() else False
+                return True if pymongo.MongoClient(MongoDB_Settings.MONGODB_CONNECTION_STRING, serverSelectionTimeoutMS=MongoDB_Settings.MONGODB_CONN_TIMEOUT).server_info() else False
         except:
             if not can_force_start or MongoDB_Settings.MONGODB_ATLAS:
                 raise Exception(f'ERROR - MongoDB ping failed for host [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT if not MongoDB_Settings.MONGODB_ATLAS else ""}]. Ensure the service is running and config is correct')
