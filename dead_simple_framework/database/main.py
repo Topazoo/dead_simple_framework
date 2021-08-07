@@ -1,5 +1,5 @@
 # MongoDB
-from pymongo import MongoClient
+from .singleton import MongoManager
 from pymongo.collection import Collection
 
 # MongoDB Settings
@@ -38,7 +38,7 @@ class Database:
         if not collection: collection = MongoDB_Settings.MONGODB_DEFAULT_COLLECTION if not self.collection else self.collection
 
         # If a connection to the client isn't open, open one
-        if not self.CONNECTION: self.CONNECTION = MongoClient(MongoDB_Settings.MONGODB_CONNECTION_STRING)
+        if not self.CONNECTION: self.CONNECTION = MongoManager().getInstance()
 
         # Return the collection
         return self.CONNECTION.get_database(database).get_collection(collection)
