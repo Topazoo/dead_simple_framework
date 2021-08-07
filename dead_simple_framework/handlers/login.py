@@ -26,13 +26,13 @@ from flask import Request, Response
 
 # Typing
 from pymongo.collection import Collection
-from typing import Tuple
+from typing import Tuple, Callable
 
 
 class LoginRouteHandler(PermissionsRouteHandler):
 
-    def __init__(self, permissions:Permissions=None):
-        super().__init__(POST=self.POST, PUT=self.PUT, DELETE=self.DELETE, permissions=permissions or Permissions(PUT=['USER'], DELETE=['USER']))
+    def __init__(self, POST:Callable=None, PUT:Callable=None, DELETE:Callable=None, permissions:Permissions=None):
+        super().__init__(POST=POST or self.POST, PUT=PUT or self.PUT, DELETE=DELETE or self.DELETE, permissions=permissions or Permissions(PUT=['USER'], DELETE=['USER']))
 
         @jwt.token_in_blocklist_loader
         def check_if_token_revoked(_, body):
