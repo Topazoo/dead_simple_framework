@@ -3,6 +3,9 @@ from json import dumps
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
+# Settings
+from ..config.settings import App_Settings
+
 # Errors
 from ..api.errors import API_Error
 
@@ -29,6 +32,21 @@ class SchemaHandler:
         return schema
 
 
+    def parse_path(self, error:ValidationError):
+        path = error.path
+        if len(path):
+            return path.pop()
+
+        return None
+
+
+    def get_path_name(self, path_name:str):
+        if path_name:
+            path_name = path_name.replace('_', ' ').title()
+
+        return path_name
+
+
     def validate_request(self, route:str, method:str, request:dict):
         ''' Validate a request against the provided schema '''
 
@@ -45,9 +63,23 @@ class SchemaHandler:
             try:
                 validate(request, method_schema)
             except ValidationError as e:
-                raise API_Error(f'Schema validation for [{method}] request to route [{route}] failed! Error: {e.message} Schema: {method_schema}', 400)
+                raw_path = self.parse_path(e)
+                error_data = {
+                    'error': 'Schema validation error',
+                    'method': method,
+                    'message': e.message,
+                    'raw_path': raw_path,
+                    'path': self.get_path_name(raw_path)
+                }
+                if App_Settings.APP_DEBUG_MODE:
+                    error_data.update({
+                        'route': route,
+                        'schema': method_schema
+                    })
 
-        return True
+                return error_data
+
+        return False
 
 
     def _redact(self, fullpath:str, path:list, response_chunk:dict):
