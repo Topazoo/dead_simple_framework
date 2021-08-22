@@ -295,7 +295,9 @@ class RouteHandler:
             cls._check_logic(route.name, logic, route.collection)
 
             # Ensure the payload passes schema validation
-            route.schema_handler.validate_request(request.url_rule, request.method, payload)
+            validation_error = route.schema_handler.validate_request(request.url_rule, request.method, payload)
+            if validation_error:
+                return JsonResponse(validation_error, 400)
 
             # Ensure the payload passes the route verifier
             if getattr(route.handler, 'verifier', None) and not route.handler.verifier(request.method, payload, None): 
