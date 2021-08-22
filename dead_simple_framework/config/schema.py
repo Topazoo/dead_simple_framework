@@ -63,7 +63,6 @@ class SchemaHandler:
             try:
                 validate(request, method_schema)
             except ValidationError as e:
-                logging.critical(e.__dict__)
                 raw_path = self.parse_path(e)
                 error_data = {
                     'error': 'Schema validation error',
