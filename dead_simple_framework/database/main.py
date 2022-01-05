@@ -45,8 +45,7 @@ class Database:
     def disconnect(self):
         ''' Disconnect from a database and collection '''
 
-        if self.CONNECTION:
-            self.CONNECTION.close()
+        pass
 
 
     def __enter__(self) -> Collection:
