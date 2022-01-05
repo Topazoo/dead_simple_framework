@@ -169,7 +169,7 @@ def fetch_and_filter_data(request_params: dict, collection:Collection, lazy=Fals
         <-- A list containing the MongoDB data matching the supplied filter or all objects in a collection.
     '''
 
-    if not collection: raise API_Error('No collection was specified to get data from for this route! Check your Route configuration', 500)
+    if collection is None: raise API_Error('No collection was specified to get data from for this route! Check your Route configuration', 500)
 
     request_params = request_params.copy()
     request_params.pop('limit', None)
@@ -225,7 +225,7 @@ def insert_data(request_params: dict, collection:Collection) -> str:
         <-- [str] The ObjectId of the inserted data
     '''
 
-    if not collection: raise API_Error('No collection was specified to insert data for this route! Check your Route configuration', 500)
+    if collection is None: raise API_Error('No collection was specified to insert data for this route! Check your Route configuration', 500)
 
     mongo_fields = request_params.copy()
     return str(collection.insert_one(mongo_fields).inserted_id)
@@ -238,7 +238,7 @@ def update_data(request_params: dict, collection:Collection, upsert:bool=False) 
         <-- [bool] True if successful
     '''
 
-    if not collection: raise API_Error('No collection was specified to update data for this route! Check your Route configuration', 500)
+    if collection is None: raise API_Error('No collection was specified to update data for this route! Check your Route configuration', 500)
 
     mongo_fields = request_params.copy()
     _id = mongo_fields.pop('_id', None)
@@ -255,7 +255,7 @@ def delete_data(request_params: dict, collection:Collection, delete_all:bool=Fal
         <-- True if records were deleted
     '''
 
-    if not collection: raise API_Error('No collection was specified to delete data for this route! Check your Route configuration', 500)
+    if collection is None: raise API_Error('No collection was specified to delete data for this route! Check your Route configuration', 500)
 
     mongo_fields = request_params.copy()
     func = collection.delete_many if delete_all else collection.delete_one

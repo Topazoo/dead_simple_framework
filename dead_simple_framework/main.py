@@ -12,7 +12,7 @@ from .encoder import JSON_Encoder
 from .tasks import Task_Manager
 
 # Database
-from .database import Indices, Index
+from .database import Indices, Index, Database
 
 # App-wide settings
 from .config.settings.main import Settings
@@ -26,9 +26,6 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 
 # Utils
 import os
-
-# Debug
-import logging
 
 # TODO - [Logging] | Configure application wide logging
 # TODO - [Useability] | Use `Task_Manager` via adapter to hide unwanted methods/attributes 
@@ -56,6 +53,9 @@ class Application(Task_Manager):
         # Create Flask application
         self.app = Flask(__name__)
 
+        # Connect MongoDB
+        self.app.config['MONGO_URI'] =  Settings.MONGODB_CONNECTION_STRING
+
         # Add JWT support
         if Settings.APP_USE_JWT:
             self._setup_jwt()
@@ -66,9 +66,6 @@ class Application(Task_Manager):
 
         # Add Sentry support
         self._setup_sentry()
-
-        # Register database indices
-        self.indices.register_indices()
 
         # Log 3rd party configuration
         Settings.log_config()
@@ -87,6 +84,8 @@ class Application(Task_Manager):
         if Settings.APP_ENABLE_CORS: CORS(self.app, resources=r'/api/*', supports_credentials=True)
 
         Application._app = self
+
+        self.app.before_first_request(lambda: Database.register_indices(self.indices))
 
 
     def _setup_jwt(self):

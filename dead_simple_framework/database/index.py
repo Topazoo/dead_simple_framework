@@ -1,6 +1,3 @@
-# MongoDB
-from pymongo.errors import OperationFailure
-
 # Database
 from .main import Database
 
@@ -52,7 +49,7 @@ class Indices:
         cls.INDICES[collection][index.field] = index
 
         if register:
-            cls.register_indices()
+            Database.register_indices(cls)
 
 
     @classmethod
@@ -63,34 +60,7 @@ class Indices:
             cls.add_index(collection, index, False)
 
         if register:
-            cls.register_indices()
-
-
-    @classmethod
-    def register_indices(cls):
-        ''' Create user specified indices in MongoDB '''
-
-        curr_indices = cls.INDICES.copy()
-        for collection,indices in curr_indices.items():
-            compounds = [index.compound_with for index in indices.values() if index.compound_with]
-            with Database(collection=collection) as coll:
-                try:
-                    for field, index in indices.items():
-                        if field not in compounds and not index.compound_with:
-                            coll.create_index([(field, index.order)], **index.properties, background=True)
-                        elif field not in compounds:
-                            if index.compound_with not in indices:
-                                raise TypeError(f'Index [{index.compound_with}] to compound with index [{field}] not specified for collection [{collection}]!')
-
-                            compound = indices[index.compound_with]
-                            index.properties.update(compound.properties)
-                            coll.create_index([(field, index.order), (compound.field, compound.order)], **index.properties, background=True)
-
-                except OperationFailure as e:
-                    if e.code == 85:
-                        pass
-                    else:
-                        raise e
+            Database.register_indices(cls)
         
     
     @classmethod
