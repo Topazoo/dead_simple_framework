@@ -262,7 +262,7 @@ class RouteHandler:
 
         num_parameters = len(logic_func.__code__.co_varnames)
 
-        if collection and num_parameters < 3:
+        if collection is not None and num_parameters < 3:
             raise API_Error(f'Handler [{logic_func.__name__}] for route [{route_name}] supports [{num_parameters}] arguments. Must support 3 (request, payload, collection)', 500)
         elif num_parameters < 2:
             raise API_Error(f'Handler [{logic_func.__name__}] for route [{route_name}] supports [{num_parameters}] arguments. Must support 2 (request, payload)', 500)

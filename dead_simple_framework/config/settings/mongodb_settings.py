@@ -46,7 +46,7 @@ class MongoDB_Settings(Setting):
         else:
             auth = f"{MongoDB_Settings.MONGODB_USERNAME}:{MongoDB_Settings.MONGODB_PASSWORD}@"
             if not MongoDB_Settings.MONGODB_ATLAS:
-                MongoDB_Settings.MONGODB_CONNECTION_STRING = f'mongodb://' + (auth + MongoDB_Settings.MONGODB_HOST if auth.strip() != ':@' else MongoDB_Settings.MONGODB_HOST)
+                MongoDB_Settings.MONGODB_CONNECTION_STRING = f'mongodb://' + (auth + MongoDB_Settings.MONGODB_HOST if auth.strip() != ':@' else MongoDB_Settings.MONGODB_HOST + f":{MongoDB_Settings.MONGODB_PORT}/{MongoDB_Settings.MONGODB_DEFAULT_DB}")
             else:
                 MongoDB_Settings.MONGODB_CONNECTION_STRING = f'mongodb+srv://' + (auth + MongoDB_Settings.MONGODB_HOST if auth.strip() != ':@' else MongoDB_Settings.MONGODB_HOST) + f'/{MongoDB_Settings.MONGODB_DEFAULT_DB}?retryWrites=true&w=majority'
         # Allow MongoDB to be force started
@@ -58,7 +58,7 @@ class MongoDB_Settings(Setting):
 
         MongoDB_Settings.check_mongodb_connection()
         if not MongoDB_Settings.MONGODB_ATLAS:
-            conn_str = f'MongoDB connection string set to [{MongoDB_Settings.MONGODB_CONNECTION_STRING}:{MongoDB_Settings.MONGODB_PORT}]'
+            conn_str = f'MongoDB connection string set to [{MongoDB_Settings.MONGODB_CONNECTION_STRING}]'
             log_data = [
                 f'MongoDB data path set to [{MongoDB_Settings.MONGODB_DATA_PATH}]',
                 f'MongoDB log path set to [{MongoDB_Settings.MONGODB_LOG_PATH}]',
