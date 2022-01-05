@@ -12,12 +12,12 @@ setuptools.setup(
     name='dead_simple_framework',
     license="MIT",
     description='RESTful Flask framework with builtin MongoDB, Redis, Celery, Sentry and Slack integrations',
-    version='v1.2.0',
+    version='v1.2.1',
     long_description=README,
     url='https://github.com/Topazoo/dead_simple_framework',
     packages=setuptools.find_packages(),
     python_requires=">=3.5",
-    install_requires=['flask', 'pymongo', 'celery', 'flask-cors', 'requests', 'redis', 'eventlet', 'pyOpenSSL', 'Flask-JWT-Extended', 'passlib', 'jsonschema', 'sentry-sdk[flask]', 'slack-sdk'],
+    install_requires=['flask', 'pymongo', 'celery', 'flask-cors', 'requests', 'redis', 'eventlet', 'pyOpenSSL', 'Flask-JWT-Extended', 'passlib', 'jsonschema', 'sentry-sdk[flask]', 'slack-sdk', 'Flask-PyMongo'],
     long_description_content_type='text/markdown',
     classifiers=[]
 )
