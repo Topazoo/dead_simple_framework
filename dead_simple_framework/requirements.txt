@@ -1,6 +1,6 @@
 Flask>=1.1.2
 pymongo==4.0.1
-celery==4.4.2
+celery==5.2.2
 Flask-Cors==3.0.9
 requests>=2.23.0
 redis>=3.5.2
