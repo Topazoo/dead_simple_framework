@@ -1,4 +1,5 @@
 # MongoDB
+from bson.objectid import ObjectId
 from pymongo.collection import Collection
 from pymongo import TEXT
 from werkzeug.local import LocalProxy
@@ -84,3 +85,14 @@ class Database:
                         pass
                     else:
                         raise e
+
+    @classmethod
+    def register_fixtures(cls, fixtures):
+        ''' Register database fixtures in MongoDB'''
+
+        fixtures = fixtures.fixtures
+        for collection in fixtures:
+            with cls(collection=collection) as coll:
+                for fixture in fixtures[collection]:
+                    fixture["_id"] = ObjectId(fixture["_id"])
+                    coll.update_one({"_id": fixture["_id"]}, {"$set": fixture}, upsert=True)

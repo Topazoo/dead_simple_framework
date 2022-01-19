@@ -12,7 +12,7 @@ from .encoder import JSON_Encoder
 from .tasks import Task_Manager
 
 # Database
-from .database import Indices, Index, Database
+from .database import Indices, Index, Database, Fixtures
 
 # App-wide settings
 from .config.settings.main import Settings
@@ -86,6 +86,7 @@ class Application(Task_Manager):
         Application._app = self
 
         self.app.before_first_request(lambda: Database.register_indices(self.indices))
+        self.app.before_first_request(lambda: Database.register_fixtures(Fixtures(config.get('fixtures'))))
 
 
     def _setup_jwt(self):
