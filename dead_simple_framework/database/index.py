@@ -89,12 +89,16 @@ class Indices:
 class Index:
     ''' Stores MongoDB index information '''
 
-    def __init__(self, field:str, order:int, properties:dict=None, compound_with:str=None):
+    def __init__(self, field:str, order:int=None, properties:dict=None, compound_with:str=None, is_text=False):
 
+        if not order and not field:
+            raise TypeError(f"Index [{field}] was not passed an order and is_text is False. Please supply and order or create a text index")
+            
         self.field = field
         self.order = order
         self.properties = properties or {}
         self.compound_with = compound_with
+        self.is_text = is_text
 
 
     @classmethod

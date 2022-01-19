@@ -1,5 +1,6 @@
 # MongoDB
 from pymongo.collection import Collection
+from pymongo import TEXT
 from werkzeug.local import LocalProxy
 from pymongo.errors import OperationFailure
 
@@ -66,7 +67,9 @@ class Database:
             with cls(collection=collection) as coll:
                 try:
                     for field, index in indices.items():
-                        if field not in compounds and not index.compound_with:
+                        if index.is_text:
+                            coll.create_index([(field, TEXT)])
+                        elif field not in compounds and not index.compound_with:
                             coll.create_index([(field, index.order)], **index.properties, background=True)
                         elif field not in compounds:
                             if index.compound_with not in indices:
