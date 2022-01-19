@@ -10,9 +10,9 @@ from ..config import MongoDB_Settings
 
 # Utilities
 from .utils import get_mongo_instance
+import logging
 
-# TODO - [Stability]     | Warnings + (Dummy `Database` if MongoDB isn't running)?
-# TODO - [Useability]    | Allow `connect()` and `disconnect()` as class methods
+# TODO - [Useability]    | Allow `connect()` and `disconnect()` as class methods?
 
 
 class Database:
@@ -95,4 +95,12 @@ class Database:
             with cls(collection=collection) as coll:
                 for fixture in fixtures[collection]:
                     fixture["_id"] = ObjectId(fixture["_id"])
-                    coll.update_one({"_id": fixture["_id"]}, {"$set": fixture}, upsert=True)
+                    try:
+                        coll.update_one({"_id": fixture["_id"]}, {"$set": fixture}, upsert=True)
+                    except OperationFailure as e:
+                        if e.code == 11000:
+                            logging.warning(f"Failed to register fixture:\n{fixture}\nA duplicate was detected. Duplicates field:\n{e.details.get('keyValue')}\n")
+                        else:
+                            logging.warning(f"Failed to register fixture:\n{e}")
+                    except Exception as e:
+                        logging.warning(f"Failed to register fixture:\n{e}")
