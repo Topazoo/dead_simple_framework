@@ -100,5 +100,7 @@ class Database:
                     except OperationFailure as e:
                         if e.code == 11000:
                             logging.warning(f"Failed to register fixture:\n{fixture}\nA duplicate was detected. Duplicates field:\n{e.details.get('keyValue')}\n")
+                        else:
+                            logging.warning(f"Failed to register fixture:\n{e}")
                     except Exception as e:
                         logging.warning(f"Failed to register fixture:\n{e}")
