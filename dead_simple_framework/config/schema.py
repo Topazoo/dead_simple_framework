@@ -58,7 +58,7 @@ class SchemaHandler:
                 if op in request:
                     for chunk in request[op]:
                         self.validate_request(route, method, chunk, True)
-                    return True
+                    return False
 
             try:
                 validate(request, method_schema)
