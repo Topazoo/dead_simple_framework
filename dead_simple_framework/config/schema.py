@@ -47,22 +47,25 @@ class SchemaHandler:
         return path_name
 
 
-    def validate_request(self, route:str, method:str, request:dict):
+    def validate_request(self, route:str, method:str, request:dict, throw_errors=False):
         ''' Validate a request against the provided schema '''
 
         if method in self.schema:
             method_schema = self.schema[method].copy()
             if 'redact' in method_schema: method_schema.pop('redact')
             if 'filter' in request: request.update(request.pop('filter'))
-            for op in ['$and', '$or']:
+            for op in ['$and', '$or', "$elemMatch"]:
                 if op in request:
                     for chunk in request[op]:
-                        self.validate_request(route, method, chunk)
-                    return True
+                        self.validate_request(route, method, chunk, True)
+                    return False
 
             try:
                 validate(request, method_schema)
             except ValidationError as e:
+                if throw_errors:
+                    raise e
+
                 raw_path = self.parse_path(e)
                 error_data = {
                     'error': 'Schema validation error',
