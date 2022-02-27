@@ -110,7 +110,7 @@ def parse_query_pairs(payload: str) -> dict:
     '''
 
     pairs = {}
-    for pair_tuple in map(lambda pair: re.split(r":(?![^{]*})", pair), [pair for pair in re.split(r",+(?![^([|{)]*(\]|}))", payload)]):
+    for pair_tuple in map(lambda pair: re.split(r":(?![^{]*})", pair), [pair for pair in re.split(r",+(?![^([|{)]*(\]|}))", payload) if pair]):
         params = normalize_query_string(pair_tuple[1])
         normalized_ops = normalize_op_params(pair_tuple[0], params)
         if isinstance(normalized_ops, (str, bool)):
