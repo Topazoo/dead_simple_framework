@@ -269,7 +269,7 @@ class RouteHandler:
         
 
     @classmethod
-    def main(cls) -> Response:
+    def main(cls, **kwargs) -> Response:
         ''' Called when the speciied endpoint is sent an HTTP request. Delegates 
             to the appropriate handler based on the request method or returns a JSON
             formatted error if the method is not supported.
@@ -290,6 +290,9 @@ class RouteHandler:
                 payload = parse_query_string(request.query_string.decode()) if request.query_string.decode() else {}
             else:
                 payload = request.get_json(force=True) if request.data else dict(request.form)
+
+            # Add URL params over query params
+            payload = {**payload, **kwargs}
 
             # Ensure user defined logic can accept required arguments or throw a warning
             cls._check_logic(route.name, logic, route.collection)
