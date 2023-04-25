@@ -8,7 +8,7 @@ import os
 def get_list_from_env(key:str, default:str=None):
     result = os.environ.get(key, default)
     if result and ',' in result:
-        return result.split('')
+        return result.split(',')
     elif result:
         return [result]
     
