@@ -4,6 +4,17 @@ from .setting import Setting
 # Utilities
 import os
 
+
+def get_list_from_env(key:str, default:str=None):
+    result = os.environ.get(key, default)
+    if result and ',' in result:
+        return result.split('')
+    elif result:
+        return [result]
+    
+    return result
+
+
 class App_Settings(Setting):
     ''' Used to specify and validate application settings '''
 
@@ -18,9 +29,10 @@ class App_Settings(Setting):
     APP_API_CLIENT_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
     APP_LOG_CONFIG = os.environ.get('APP_LOG_CONFIG', 'True').capitalize() == 'True'
+    APP_CORS_ENABLED_PATHS = get_list_from_env('APP_CORS_ENABLED_PATHS', '/api/*')
     APP_DEBUG_MODE = True
 
-    def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, app_api_client_headers:dict=None, app_log_config:bool=None):
+    def __init__(self, app_env:str=None, app_enable_cors:bool=None, app_host:str=None, app_port:int=None, app_api_client_headers:dict=None, app_log_config:bool=None, app_cors_enabled_paths:list=None):
 
         if app_env: App_Settings.APP_ENV = app_env
         os.environ['FLASK_ENV'] = App_Settings.APP_ENV
@@ -31,6 +43,7 @@ class App_Settings(Setting):
         if app_api_client_headers: App_Settings.APP_API_CLIENT_HEADERS = app_api_client_headers
 
         if app_log_config: App_Settings.APP_LOG_CONFIG = app_log_config
+        if app_cors_enabled_paths: App_Settings.APP_CORS_ENABLED_PATHS = app_cors_enabled_paths
         
         App_Settings.APP_DEBUG_MODE = True if App_Settings.APP_ENV in ['dev', 'development', 'uat'] else False
         os.environ['FLASK_DEBUG'] = '1' if App_Settings.APP_DEBUG_MODE else '0'
@@ -42,5 +55,6 @@ class App_Settings(Setting):
 
         return [
             'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application. Set `APP_ENABLE_CORS` to True in environment to enable it',
+            f'CORS enabled for paths: {App_Settings.APP_CORS_ENABLED_PATHS}' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application. Set `APP_ENABLE_CORS` to True in environment to enable it',
             f'Default API client headers are {App_Settings.APP_API_CLIENT_HEADERS}'
         ]
