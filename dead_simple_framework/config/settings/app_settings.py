@@ -55,6 +55,6 @@ class App_Settings(Setting):
 
         return [
             'CORS enabled for application' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application. Set `APP_ENABLE_CORS` to True in environment to enable it',
-            f'CORS enabled for paths: {App_Settings.APP_CORS_ENABLED_PATHS}' if App_Settings.APP_ENABLE_CORS else 'CORS disabled for application. Set `APP_ENABLE_CORS` to True in environment to enable it',
+            f'CORS enabled for paths: {App_Settings.APP_CORS_ENABLED_PATHS}' if App_Settings.APP_ENABLE_CORS else '',
             f'Default API client headers are {App_Settings.APP_API_CLIENT_HEADERS}'
         ]
