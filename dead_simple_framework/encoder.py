@@ -1,8 +1,6 @@
-# Base Encoder
-from flask.json import JSONEncoder
-
 # Utilities
 from datetime import datetime
+from json import JSONEncoder
 
 class JSON_Encoder(JSONEncoder):
     ''' Custom JSON serializer '''
