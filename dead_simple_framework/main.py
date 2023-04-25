@@ -80,8 +80,7 @@ class Application(Task_Manager):
         # Initialize inherited asynchronous task management ability
         super().__init__(dynamic_tasks=config.get('tasks'))
 
-        # # TODO - Dynamic Resources
-        if Settings.APP_ENABLE_CORS: CORS(self.app, resources=r'/api/*', supports_credentials=True)
+        if Settings.APP_ENABLE_CORS: CORS(self.app, resources=Settings.APP_CORS_ENABLED_PATHS, supports_credentials=True)
 
         Application._app = self
 
