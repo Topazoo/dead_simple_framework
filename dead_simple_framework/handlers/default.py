@@ -39,7 +39,7 @@ class DefaultRouteHandler(RouteHandler):
         if DELETE: self.DELETE = DELETE
         if PUT: self.PUT = PUT
         self.PATCH = PATCH
-        self.OPTIONS = OPTIONS
+        if OPTIONS: self.OPTIONS = OPTIONS
 
         if verifier: self.verifier = verifier
         self.methods = list(filter(lambda x: getattr(self,x) != None, self.SUPPORTED_HTTP_METHODS))

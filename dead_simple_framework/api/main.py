@@ -242,6 +242,9 @@ class RouteHandler:
             if App_Settings.APP_ENV == 'development': raise e
             return JsonException('DELETE', e)
 
+    @staticmethod
+    def OPTIONS(request:Request, payload:dict, collection:Collection) -> Response:
+        return Response()
 
     @staticmethod
     def _get_handler(method:str, route:Route) -> Callable:
